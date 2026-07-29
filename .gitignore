@@ -1,0 +1,29 @@
+# Secrets
+.env
+
+# Virtual environments
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Build artifacts
+build/
+dist/
+
+# Pytest cache
+.pytest_cache/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Generated research results
+notebooks/
+
+# Temporary data
+tests/integration/data/
+
+# HTML exports
+*.html
