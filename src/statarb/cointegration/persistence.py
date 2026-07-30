@@ -1,25 +1,24 @@
 import pandas as pd
 
-from .johansen import estimate_cointegration
+from .evaluation import evaluate_spread
 
 
-def rolling_cointegration_persistence(
-    log_prices: pd.DataFrame,
-    tickers: list[str],
+def rolling_spread_persistence(
+    spread: pd.Series,
     *,
     window: int = 120,
-    maxlags: int = 10,
 ) -> float:
     """
-    Estimate rolling Johansen cointegration persistence.
+    Estimate rolling spread persistence.
+
+    Fraction of rolling windows
+    where the spread satisfies
+    stationarity conditions.
 
     Parameters
     ----------
-    log_prices:
-        Log price dataframe.
-
-    tickers:
-        Assets in one candidate.
+    spread:
+        Spread time series.
 
     window:
         Rolling window length.
@@ -27,30 +26,29 @@ def rolling_cointegration_persistence(
     Returns
     -------
     float
-        Fraction of windows with rank > 0.
+        Fraction of valid stationary windows.
     """
 
-    prices = log_prices[tickers].dropna()
+    spread = spread.dropna()
 
-    if len(prices) < window:
+    if len(spread) < window:
         raise ValueError("Too few observations for rolling persistence.")
 
     total = 0
     success = 0
 
     for start in range(
-        len(prices) - window + 1,
+        len(spread) - window + 1,
     ):
-        sample = prices.iloc[start : start + window]
+        sample = spread.iloc[start : start + window]
 
-        result = estimate_cointegration(
+        evaluation = evaluate_spread(
             sample,
-            maxlags=maxlags,
         )
 
         total += 1
 
-        if result.rank > 0:
+        if evaluation.adf_pvalue < 0.05 and evaluation.kpss_pvalue > 0.05:
             success += 1
 
     return success / total

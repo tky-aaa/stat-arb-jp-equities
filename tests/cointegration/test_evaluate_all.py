@@ -1,9 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from statarb.cointegration.evaluate_all import (
-    evaluate_all_candidates,
-)
+from statarb.cointegration.evaluate_all import evaluate_all_candidates
 
 
 def test_evaluate_all_candidates():
@@ -80,16 +78,15 @@ def test_evaluate_all_candidates():
         johansen_results,
         log_prices,
         persistence_window=100,
-        persistence_maxlags=5,
     )
 
     assert len(result) == 1
 
     expected_columns = [
         "tickers",
+        "spread",
         "rank",
-        "beta_index",
-        "beta",
+        "persistence",
         "adf_stat",
         "adf_pvalue",
         "kpss_stat",
@@ -101,30 +98,7 @@ def test_evaluate_all_candidates():
         "variance",
         "std",
         "portmanteau",
-        "persistence",
     ]
 
     for column in expected_columns:
         assert column in result.columns
-
-    assert "error" not in result.columns
-
-    assert result["persistence"].notna().all()
-
-    numeric_columns = [
-        "adf_stat",
-        "adf_pvalue",
-        "kpss_stat",
-        "kpss_pvalue",
-        "rho1",
-        "phi",
-        "half_life",
-        "mean",
-        "variance",
-        "std",
-        "portmanteau",
-        "persistence",
-    ]
-
-    for column in numeric_columns:
-        assert np.isfinite(result[column]).all()

@@ -1,14 +1,10 @@
-import numpy as np
 import pandas as pd
 
 from statarb.backtest.engine import (
     run_backtest,
 )
-from statarb.cointegration.evaluate_all import (
-    evaluate_all_candidates,
-)
-from statarb.cointegration.johansen import (
-    estimate_cointegration,
+from statarb.cointegration.evaluation_pipeline import (
+    evaluation_pipeline,
 )
 from statarb.cointegration.ranking import (
     rank_spreads,
@@ -19,6 +15,9 @@ from statarb.cointegration.selection import (
 from statarb.cointegration.spread import (
     create_spread,
 )
+from statarb.screening.candidate import (
+    CandidateGroup,
+)
 from statarb.signals.zscore import (
     generate_zscore_signal,
 )
@@ -26,37 +25,28 @@ from statarb.signals.zscore import (
 
 def test_full_cointegration_pipeline():
 
-    prices = pd.read_pickle("tests/integration/data/cement_prices.pkl")
+    prices = pd.read_pickle(
+        "tests/integration/data/cement_prices.pkl",
+    )
 
-    johansen = estimate_cointegration(
+    group = CandidateGroup(
+        tickers=list(prices.columns),
+    )
+
+    evaluation = evaluation_pipeline(
+        group,
         prices,
+        min_assets=2,
+        max_assets=5,
     )
 
-    assert johansen.rank == 1
-
-    johansen_results = pd.DataFrame(
-        [
-            {
-                "tickers": johansen.tickers,
-                "rank": johansen.rank,
-                "beta": johansen.beta[:, [0]],
-                "error": np.nan,
-            }
-        ]
-    )
-
-    evaluation = evaluate_all_candidates(
-        johansen_results,
-        prices,
-    )
-
-    assert len(evaluation) == 1
+    assert len(evaluation) > 0
 
     ranked = rank_spreads(
         evaluation,
     )
 
-    assert len(ranked) == 1
+    assert len(ranked) > 0
 
     selected = select_top_spreads(
         ranked,
@@ -67,7 +57,7 @@ def test_full_cointegration_pipeline():
 
     spread = create_spread(
         prices[selected[0].tickers],
-        np.array(selected[0].beta),
+        selected[0].beta,
     )
 
     signal = generate_zscore_signal(

@@ -1,7 +1,9 @@
+import numpy as np
 import pandas as pd
 
-from .evaluation_pipeline import evaluate_candidates
-from .persistence import rolling_cointegration_persistence
+from .evaluation import evaluate_spread
+from .persistence import rolling_spread_persistence
+from .spread import create_spreads
 
 
 def evaluate_all_candidates(
@@ -9,33 +11,52 @@ def evaluate_all_candidates(
     log_prices: pd.DataFrame,
     *,
     persistence_window: int = 120,
-    persistence_maxlags: int = 10,
 ) -> pd.DataFrame:
 
-    evaluation_results = evaluate_candidates(
-        johansen_results,
-        log_prices,
-    )
+    rows = []
 
-    if len(evaluation_results) == 0:
-        return evaluation_results
+    for _, result in johansen_results.iterrows():
+        if result["rank"] <= 0:
+            continue
 
-    evaluation_results["tickers"] = evaluation_results["tickers"].apply(tuple)
+        tickers = result["tickers"]
 
-    persistence_values = []
+        prices = log_prices[tickers]
 
-    for _, row in evaluation_results.iterrows():
-        tickers = list(row["tickers"])
-
-        persistence = rolling_cointegration_persistence(
-            log_prices,
-            tickers,
-            window=persistence_window,
-            maxlags=persistence_maxlags,
+        beta = np.asarray(
+            result["beta"],
+            dtype=float,
         )
 
-        persistence_values.append(persistence)
+        spreads = create_spreads(
+            prices,
+            beta,
+        )
 
-    evaluation_results["persistence"] = persistence_values
+        for i, column in enumerate(
+            spreads.columns,
+        ):
+            spread = spreads[column]
 
-    return evaluation_results
+            evaluation = evaluate_spread(
+                spread,
+            )
+
+            persistence = rolling_spread_persistence(
+                spread,
+                window=persistence_window,
+            )
+
+            rows.append(
+                {
+                    "tickers": tickers,
+                    "rank": result["rank"],
+                    "beta_index": i,
+                    "beta": beta[:, i],
+                    "spread": column,
+                    "persistence": persistence,
+                    **evaluation.__dict__,
+                }
+            )
+
+    return pd.DataFrame(rows)
