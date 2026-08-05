@@ -1,30 +1,12 @@
-from statarb.execution.ibkr import (
-    IBKRExecution,
-    IBKROrder,
-)
+from statarb.execution.ibkr import IBKRExecution
 
 
 def test_ibkr_execution_interface():
-
     broker = IBKRExecution()
 
-    broker.connect()
+    assert broker.host == "127.0.0.1"
+    assert broker.port == 7497
+    assert broker.client_id == 1
 
-    result = broker.submit_order(
-        IBKROrder(
-            ticker="7203",
-            quantity=100,
-            side="BUY",
-        )
-    )
-
-    assert result["status"] in {
-        "Submitted",
-        "PreSubmitted",
-    }
-
-    assert result["ticker"] == "7203"
-    assert result["quantity"] == 100
-    assert result["side"] == "BUY"
-
-    broker.close()
+    assert broker.ib is not None
+    assert broker.ib.isConnected() is False

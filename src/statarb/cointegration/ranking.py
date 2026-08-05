@@ -50,6 +50,9 @@ def rank_spreads(
 
     df = evaluation_results.copy()
 
+    if df.empty:
+        return df.copy()
+
     # =========================
     # Stationarity filter
     # =========================

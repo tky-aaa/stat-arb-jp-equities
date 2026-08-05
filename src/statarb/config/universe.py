@@ -39,3 +39,13 @@ def get_topix100() -> list[str]:
     return _load_topix_csv(
         "topix100.csv",
     )
+
+
+def get_topix10() -> list[str]:
+    """
+    TOPIX10 universe.
+    """
+
+    return _load_topix_csv(
+        "topix10.csv",
+    )

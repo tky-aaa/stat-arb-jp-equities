@@ -7,14 +7,30 @@ from statarb.backtest.report import evaluate_backtest
 from statarb.cointegration.evaluation_pipeline import evaluation_pipeline
 from statarb.cointegration.ranking import rank_spreads
 from statarb.cointegration.selection import select_top_spreads
-from statarb.config.universe import get_topix100, get_topix500
+from statarb.config.settings import (
+    SCREENING_METHOD,
+    UNIVERSE,
+)
+from statarb.config.universe import get_topix10, get_topix100, get_topix500
+from statarb.data.factors.french import (
+    FrenchFactorSource,
+)
 from statarb.data.instruments.japan_equity import JapanEquity
 from statarb.data.loaders.yfinance_loader import YahooFinanceSource
 from statarb.data.transform.transform import preprocess_prices
 from statarb.execution.paper import simulate_paper_execution
 from statarb.reports.summary import create_backtest_summary
-from statarb.screening.candidate import CandidateGroup
-from statarb.screening.clustering import cluster_by_pca
+from statarb.screening.candidate import (
+    CandidateGroup,
+    generate_candidate_groups,
+)
+from statarb.screening.clustering import (
+    cluster_by_factor_exposure,
+    cluster_by_pca,
+)
+from statarb.screening.factor import (
+    estimate_ff3_exposure,
+)
 from statarb.screening.pca import compute_pca_features
 
 
@@ -67,7 +83,7 @@ def _run_one_configuration(
 
 def run_research_pipeline(
     *,
-    universe="topix100",
+    universe: str | None = None,
     start="2025-06-01",
     end="2026-01-01",
     n_clusters=20,
@@ -78,12 +94,20 @@ def run_research_pipeline(
     top_n=10,
     max_groups=5,
 ):
-    if universe == "topix100":
+    if universe is None:
+        universe = UNIVERSE
+
+    if universe == "topix10":
+        tickers = get_topix10()
+
+    elif universe == "topix100":
         tickers = get_topix100()
+
     elif universe == "topix500":
         tickers = get_topix500()
+
     else:
-        raise ValueError
+        raise ValueError(f"Unknown universe: {universe}")
 
     instruments = [JapanEquity(t) for t in tickers]
 
@@ -101,27 +125,60 @@ def run_research_pipeline(
 
     returns = log_prices.diff().dropna()
 
-    pca_features = compute_pca_features(
-        returns,
-        n_components=10,
-    )
+    # ======================================================
+    # Candidate generation
+    # ======================================================
 
-    clusters = cluster_by_pca(
-        pca_features,
-        n_clusters=n_clusters,
-    )
-
-    candidate_groups = []
-
-    for cluster_id in sorted(clusters.unique()):
-        members = clusters[clusters == cluster_id].index.tolist()
-
-        if min_cluster_size <= len(members) <= max_cluster_size:
-            candidate_groups.append(
-                CandidateGroup(
-                    tickers=members,
-                )
+    if SCREENING_METHOD == "full":
+        candidate_groups = [
+            CandidateGroup(
+                tickers=list(log_prices.columns),
             )
+        ]
+
+    elif SCREENING_METHOD == "pca":
+        pca_features = compute_pca_features(
+            returns,
+            n_components=10,
+        )
+
+        clusters = cluster_by_pca(
+            pca_features,
+            n_clusters=n_clusters,
+        )
+
+        candidate_groups = generate_candidate_groups(
+            clusters,
+            min_size=min_cluster_size,
+            max_size=max_cluster_size,
+        )
+
+    elif SCREENING_METHOD == "ff3":
+        factor_loader = FrenchFactorSource()
+
+        factors = factor_loader.get_factors(
+            start=start,
+            end=end,
+        )
+
+        exposures = estimate_ff3_exposure(
+            returns,
+            factors,
+        )
+
+        clusters = cluster_by_factor_exposure(
+            exposures,
+            n_clusters=n_clusters,
+        )
+
+        candidate_groups = generate_candidate_groups(
+            clusters,
+            min_size=min_cluster_size,
+            max_size=max_cluster_size,
+        )
+
+    else:
+        raise ValueError(f"Unknown screening method: {SCREENING_METHOD}")
 
     if max_groups is not None:
         candidate_groups = candidate_groups[:max_groups]

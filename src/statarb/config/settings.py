@@ -1,16 +1,8 @@
-"""
-Global project settings.
-
-This file centralizes parameters used across the whole project.
-"""
-
 # ======================================================
 # Universe
 # ======================================================
 
-UNIVERSE = "topix500"
-# "topix100"
-# "topix500"
+UNIVERSE = "topix10"
 
 START_DATE = "2025-06-01"
 END_DATE = "2026-01-01"
@@ -18,6 +10,11 @@ END_DATE = "2026-01-01"
 # ======================================================
 # Screening
 # ======================================================
+
+SCREENING_METHOD = "full"
+# "full"
+# "pca"
+# "ff3"
 
 N_CLUSTERS = 20
 
@@ -29,7 +26,7 @@ MAX_CLUSTER_SIZE = 50
 # ======================================================
 
 MIN_ASSETS = 2
-MAX_ASSETS = 3
+MAX_ASSETS = 2
 
 TOP_N_SPREADS = 10
 
@@ -56,8 +53,6 @@ SPREAD_METHOD = "static"
 # ======================================================
 
 BROKER = "IBKR"
-# "IBKR"
-# "ALPACA"
 
 PAPER_TRADING = True
 
