@@ -15,7 +15,7 @@ def evaluation_pipeline(
     persistence_window: int = 120,
 ) -> pd.DataFrame:
     """
-    Complete cointegration evaluation pipeline.
+    Complete evaluation pipeline.
     """
 
     johansen_results = search_cointegrated_subgroups(
@@ -28,10 +28,10 @@ def evaluation_pipeline(
     if len(johansen_results) == 0:
         return pd.DataFrame()
 
-    johansen_results = pd.DataFrame(johansen_results)
+    johansen_df = pd.DataFrame(johansen_results)
 
     return evaluate_all_candidates(
-        johansen_results,
+        johansen_df,
         log_prices,
         persistence_window=persistence_window,
     )

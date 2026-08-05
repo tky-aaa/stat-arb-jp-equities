@@ -12,18 +12,29 @@ class YahooFinanceSource(PriceDataSource):
         end,
     ) -> pd.DataFrame:
 
-        contracts = [instrument.yahoo_contract() for instrument in instruments]
+        prices = []
 
-        data = yf.download(
-            contracts,
-            start=start,
-            end=end,
-            auto_adjust=True,
-            progress=False,
+        for i, instrument in enumerate(instruments):
+            contract = instrument.yahoo_contract()
+
+            data = yf.download(
+                contract,
+                start=start,
+                end=end,
+                auto_adjust=True,
+                progress=False,
+                threads=False,
+            )
+
+            if data.empty:
+                continue
+
+            series = data["Close"]
+            series.name = instrument.ticker
+
+            prices.append(series)
+
+        return pd.concat(
+            prices,
+            axis=1,
         )
-
-        prices = data["Close"].copy()
-
-        prices.columns = [instrument.ticker for instrument in instruments]
-
-        return prices

@@ -8,7 +8,6 @@ from .metrics import (
     max_drawdown,
     number_of_trades,
     sharpe_ratio,
-    total_return,
     volatility,
     win_rate,
 )
@@ -35,6 +34,18 @@ class BacktestMetrics:
     number_of_trades: int
 
 
+def _build_equity_curve(
+    result: BacktestResult,
+) -> pd.Series:
+    """
+    Convert cumulative pnl into equity curve.
+
+    Initial capital is normalized to 1.
+    """
+
+    return 1.0 + result.cumulative_pnl
+
+
 def evaluate_backtest(
     result: BacktestResult,
     signal: pd.Series,
@@ -45,27 +56,29 @@ def evaluate_backtest(
     Calculate backtest performance metrics.
     """
 
+    equity = _build_equity_curve(
+        result,
+    )
+
     return BacktestMetrics(
-        total_return=total_return(
-            result.equity,
-        ),
+        total_return=float(equity.iloc[-1] - 1.0),
         annualized_return=annualized_return(
-            result.equity,
+            equity,
             periods_per_year,
         ),
         volatility=volatility(
-            result.returns,
+            result.pnl,
             periods_per_year,
         ),
         sharpe_ratio=sharpe_ratio(
-            result.returns,
+            result.pnl,
             periods_per_year,
         ),
         max_drawdown=max_drawdown(
-            result.equity,
+            equity,
         ),
         win_rate=win_rate(
-            result.returns,
+            result.pnl,
         ),
         number_of_trades=number_of_trades(
             signal,

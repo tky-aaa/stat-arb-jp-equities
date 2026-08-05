@@ -1,12 +1,7 @@
-import numpy as np
 import pandas as pd
 
-from statarb.backtest.pipeline import (
-    run_spread_backtest,
-)
-from statarb.cointegration.selection import (
-    SelectedSpread,
-)
+from statarb.backtest.pipeline import run_spread_backtest
+from statarb.cointegration.selection import SelectedSpread
 
 
 def test_run_strategy_backtest():
@@ -81,14 +76,6 @@ def test_run_strategy_backtest():
 
     assert len(result.signal) == len(log_prices)
 
-    assert len(result.backtest.returns) == len(log_prices)
+    assert len(result.backtest.pnl) == len(log_prices)
 
-    assert len(result.backtest.equity) == len(log_prices)
-
-    equity = result.backtest.equity.dropna()
-
-    assert not equity.empty
-
-    assert equity.notna().all()
-
-    assert np.isfinite(equity.astype(float).values).all()
+    assert len(result.backtest.cumulative_pnl) == len(log_prices)

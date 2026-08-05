@@ -1,5 +1,12 @@
 from dataclasses import dataclass
 
+from alpaca.trading.client import TradingClient
+from alpaca.trading.enums import (
+    OrderSide,
+    TimeInForce,
+)
+from alpaca.trading.requests import MarketOrderRequest
+
 
 @dataclass(frozen=True)
 class AlpacaOrder:
@@ -21,44 +28,51 @@ class AlpacaExecution:
 
     def __init__(
         self,
-        api_key: str | None = None,
-        secret_key: str | None = None,
+        api_key: str,
+        secret_key: str,
+        *,
         paper: bool = True,
     ):
-        self.api_key = api_key
-        self.secret_key = secret_key
-        self.paper = paper
+        self.client = TradingClient(
+            api_key=api_key,
+            secret_key=secret_key,
+            paper=paper,
+        )
 
     def connect(self) -> None:
         """
-        Connect to Alpaca.
-
-        Actual API connection will be implemented later.
+        Connectivity check.
         """
 
-        return
+        self.client.get_account()
 
     def submit_order(
         self,
         order: AlpacaOrder,
     ) -> dict:
-        """
-        Submit order.
 
-        Paper implementation only.
-        """
+        request = MarketOrderRequest(
+            symbol=order.ticker,
+            qty=order.quantity,
+            side=(OrderSide.BUY if order.side.upper() == "BUY" else OrderSide.SELL),
+            time_in_force=TimeInForce.DAY,
+        )
+
+        result = self.client.submit_order(
+            order_data=request,
+        )
 
         return {
-            "status": "submitted",
+            "status": result.status,
+            "orderId": result.id,
             "ticker": order.ticker,
             "quantity": order.quantity,
             "side": order.side,
-            "paper": self.paper,
         }
 
     def close(self) -> None:
         """
-        Close connection.
+        Nothing to close.
         """
 
         return

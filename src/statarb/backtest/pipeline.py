@@ -136,7 +136,11 @@ def run_spread_backtest(
     # ==================================================
 
     backtest_result = run_backtest(
-        spread,
+        prices,
+        np.asarray(
+            selected_spread.beta,
+            dtype=float,
+        ),
         signal,
     )
 

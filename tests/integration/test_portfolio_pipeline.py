@@ -77,6 +77,6 @@ def test_full_portfolio_pipeline():
         exit_threshold=0.5,
     )
 
-    assert len(result.returns) == len(log_prices)
+    assert len(result.pnl) == len(log_prices)
 
-    assert result.equity.notna().all()
+    assert result.cumulative_pnl.notna().all()

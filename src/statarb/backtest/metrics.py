@@ -9,7 +9,12 @@ def total_return(
     Total return.
     """
 
-    return float(equity.iloc[-1] / equity.iloc[0] - 1)
+    initial = equity.iloc[0]
+
+    if initial == 0:
+        return float(equity.iloc[-1] - initial)
+
+    return float(equity.iloc[-1] / initial - 1)
 
 
 def annualized_return(

@@ -31,3 +31,9 @@ exclude = [
     ".venv",
     "notebooks",
 ]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore:There is no current event loop:DeprecationWarning:eventkit.*",
+    "ignore:websockets\\.legacy is deprecated:DeprecationWarning:websockets.*",
+]

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+import numpy as np
 import pandas as pd
 
 
@@ -9,54 +10,89 @@ class BacktestResult:
     Result of spread strategy backtest.
     """
 
-    returns: pd.Series
+    pnl: pd.Series
+
+    cumulative_pnl: pd.Series
 
     equity: pd.Series
 
 
 def run_backtest(
-    spread: pd.Series,
+    prices: pd.DataFrame,
+    weights: np.ndarray,
     signal: pd.Series,
+    *,
+    initial_capital: float = 1.0,
 ) -> BacktestResult:
     """
-    Run simple spread backtest.
+    Run asset-level spread backtest.
 
     Parameters
     ----------
-    spread:
-        Spread time series.
+    prices:
+        Log price dataframe.
+
+    weights:
+        Spread portfolio weights.
 
     signal:
-        Position sizing signal.
+        Position signal.
 
-        Example:
             +1 : long spread
             -1 : short spread
              0 : flat
+
+    initial_capital:
+        Initial equity value.
 
     Returns
     -------
     BacktestResult
     """
 
-    if not spread.index.equals(signal.index):
-        raise ValueError("spread and signal index must match.")
+    if not prices.index.equals(signal.index):
+        raise ValueError("prices and signal index must match.")
 
-    # Position decided at t is executed at t+1
-    position = signal.shift(1)
+    weights = np.asarray(
+        weights,
+        dtype=float,
+    )
 
-    # Spread movement
-    spread_change = spread.diff()
+    if prices.shape[1] != len(weights):
+        raise ValueError("Number of assets and weights must match.")
 
-    # Strategy return
-    returns = position * spread_change
+    # ------------------------------------------
+    # Asset return
+    # ------------------------------------------
 
-    returns = returns.fillna(0)
+    asset_returns = prices.diff().fillna(0)
 
-    # Equity curve
-    equity = (1 + returns).cumprod()
+    # ------------------------------------------
+    # Spread return
+    #
+    # w' ΔX
+    # ------------------------------------------
+
+    spread_returns = asset_returns.dot(weights)
+
+    # ------------------------------------------
+    # Execute next bar
+    # ------------------------------------------
+
+    position = signal.shift(1).fillna(0)
+
+    # ------------------------------------------
+    # PnL
+    # ------------------------------------------
+
+    pnl = position * spread_returns
+
+    cumulative_pnl = pnl.cumsum()
+
+    equity = initial_capital + cumulative_pnl
 
     return BacktestResult(
-        returns=returns,
+        pnl=pnl,
+        cumulative_pnl=cumulative_pnl,
         equity=equity,
     )

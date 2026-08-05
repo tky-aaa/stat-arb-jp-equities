@@ -18,6 +18,29 @@ class PortfolioBacktestResult:
 
     spread_returns: pd.DataFrame
 
+    weights_sum: float
+
+    @property
+    def pnl(self) -> pd.Series:
+        """
+        Alias for portfolio returns.
+        """
+        return self.returns
+
+    @property
+    def cumulative_pnl(self) -> pd.Series:
+        """
+        Alias for cumulative portfolio PnL.
+        """
+        return self.equity - 1
+
+    @property
+    def spread_pnls(self) -> pd.DataFrame:
+        """
+        Alias for individual spread returns.
+        """
+        return self.spread_returns
+
 
 def combine_backtest_results(
     returns_list: list[pd.Series],
@@ -57,6 +80,7 @@ def combine_backtest_results(
         returns=portfolio_returns,
         equity=equity,
         spread_returns=spread_returns,
+        weights_sum=sum(weights),
     )
 
 
@@ -103,7 +127,7 @@ def run_portfolio_backtest(
         )
 
         returns_list.append(
-            result.backtest.returns,
+            result.backtest.pnl,
         )
 
     return combine_backtest_results(

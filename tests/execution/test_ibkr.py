@@ -18,7 +18,13 @@ def test_ibkr_execution_interface():
         )
     )
 
-    assert result["status"] == "submitted"
+    assert result["status"] in {
+        "Submitted",
+        "PreSubmitted",
+    }
+
     assert result["ticker"] == "7203"
+    assert result["quantity"] == 100
+    assert result["side"] == "BUY"
 
     broker.close()

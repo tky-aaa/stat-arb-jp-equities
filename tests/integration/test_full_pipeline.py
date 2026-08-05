@@ -55,20 +55,23 @@ def test_full_cointegration_pipeline():
 
     assert len(selected) == 1
 
-    spread = create_spread(
-        prices[selected[0].tickers],
-        selected[0].beta,
-    )
+    selected_spread = selected[0]
+
+    prices_selected = prices[selected_spread.tickers]
 
     signal = generate_zscore_signal(
-        spread,
+        create_spread(
+            prices_selected,
+            selected_spread.beta,
+        )
     )
 
     backtest = run_backtest(
-        spread,
+        prices_selected,
+        selected_spread.beta,
         signal.position,
     )
 
-    assert backtest.equity.notna().all()
+    assert backtest.cumulative_pnl.notna().all()
 
-    assert len(backtest.equity) == len(prices)
+    assert len(backtest.cumulative_pnl) == len(prices)

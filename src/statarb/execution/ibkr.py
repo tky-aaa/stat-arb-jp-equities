@@ -1,24 +1,16 @@
 from dataclasses import dataclass
 
+from ib_insync import IB, MarketOrder, Stock
+
 
 @dataclass(frozen=True)
 class IBKROrder:
-    """
-    IBKR order representation.
-    """
-
     ticker: str
-
     quantity: int
-
     side: str
 
 
 class IBKRExecution:
-    """
-    IBKR execution interface.
-    """
-
     def __init__(
         self,
         host: str = "127.0.0.1",
@@ -29,35 +21,49 @@ class IBKRExecution:
         self.port = port
         self.client_id = client_id
 
+        self.ib = IB()
+
     def connect(self) -> None:
-        """
-        Connect to IBKR.
-
-        Actual TWS connection will be implemented later.
-        """
-
-        return
+        if not self.ib.isConnected():
+            self.ib.connect(
+                self.host,
+                self.port,
+                clientId=self.client_id,
+            )
 
     def submit_order(
         self,
         order: IBKROrder,
     ) -> dict:
-        """
-        Submit order.
 
-        Paper implementation only.
-        """
+        contract = Stock(
+            order.ticker,
+            "TSEJ",
+            "JPY",
+        )
+
+        self.ib.qualifyContracts(contract)
+
+        ib_order = MarketOrder(
+            order.side,
+            order.quantity,
+        )
+
+        trade = self.ib.placeOrder(
+            contract,
+            ib_order,
+        )
+
+        self.ib.sleep(1)
 
         return {
-            "status": "submitted",
+            "status": trade.orderStatus.status,
+            "orderId": trade.order.orderId,
             "ticker": order.ticker,
             "quantity": order.quantity,
             "side": order.side,
         }
 
     def close(self) -> None:
-        """
-        Close connection.
-        """
-
-        return
+        if self.ib.isConnected():
+            self.ib.disconnect()

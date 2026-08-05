@@ -92,12 +92,12 @@ def test_kalman_spread_pipeline():
 
     assert len(result.signal) == len(log_prices)
 
-    assert len(result.backtest.returns) == len(log_prices)
+    assert len(result.backtest.pnl) == len(log_prices)
 
-    assert len(result.backtest.equity) == len(log_prices)
+    assert len(result.backtest.cumulative_pnl) == len(log_prices)
 
     assert np.isfinite(
         result.spread.values,
     ).all()
 
-    assert result.backtest.equity.notna().all()
+    assert result.backtest.cumulative_pnl.notna().all()

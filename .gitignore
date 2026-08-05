@@ -22,6 +22,9 @@ dist/
 # Generated research results
 notebooks/
 
+# Generated results
+results/
+
 # Temporary data
 tests/integration/data/
 
