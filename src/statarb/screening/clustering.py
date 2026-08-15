@@ -68,7 +68,6 @@ def cluster_by_factor_exposure(
 
 def cluster_by_pca(
     pca_features,
-    *,
     n_clusters: int = 20,
 ):
     """
