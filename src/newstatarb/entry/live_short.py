@@ -1,11 +1,22 @@
-from newstatarb.config.config import Config
+import argparse
+
+from newstatarb.config.config import LiveConfig
 from newstatarb.orchestrator.live_short import LiveShortOrchestrator
 
 
 def main() -> None:
-    config = Config()
-    bso = LiveShortOrchestrator(config)
-    bso.run()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--test-start", required=True)
+    parser.add_argument("--test-end", required=True)
+
+    args = parser.parse_args()
+
+    config = LiveConfig()
+    orchestrator = LiveShortOrchestrator(config)
+    orchestrator.run(
+        test_start=args.test_start,
+        test_end=args.test_end,
+    )
 
 
 if __name__ == "__main__":
