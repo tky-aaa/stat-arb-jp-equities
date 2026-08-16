@@ -25,16 +25,26 @@ class DataAPI:
 
         instruments = [JapanEquity(ticker) for ticker in tickers]
 
+        print("[DataAPI] training: loading prices...", flush=True)
         training = self.loader.get_prices(
             instruments=instruments,
             start=self.training_start,
             end=self.training_end,
         )
+        print(
+            f"[DataAPI] training: done {training.shape}",
+            flush=True,
+        )
 
+        print("[DataAPI] test: loading prices...", flush=True)
         test = self.loader.get_prices(
             instruments=instruments,
             start=self.test_start,
             end=self.test_end,
+        )
+        print(
+            f"[DataAPI] test: done {test.shape}",
+            flush=True,
         )
 
         return Prices(

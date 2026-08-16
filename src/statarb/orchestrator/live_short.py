@@ -64,10 +64,13 @@ class LiveShortOrchestrator:
         test_start: str,
         test_end: str,
     ):
+        print("[1/6] LiveStrategyStorage: loading strategy...")
         strategy = self.storage.load(
             Path(self.config.strategy_path),
         )
+        print(f"[1/6] LiveStrategyStorage: done ({len(strategy.analyses)} analyses)")
 
+        print("[2/6] DataAPI: loading prices...")
         if self.data_api is None:
             data_api = DataAPI(
                 self.config.universe,
@@ -80,21 +83,31 @@ class LiveShortOrchestrator:
             data_api = self.data_api
 
         prices = data_api.service()
+        print("[2/6] DataAPI: done")
 
+        print("[3/6] PortfolioAPI: generating portfolio...")
         decision = self.portfolio_api.service(
             prices,
             strategy.analyses,
         )
+        print(f"[3/6] PortfolioAPI: done ({len(decision.signals)} signals)")
 
+        print("[4/6] LiveExecutionBuilder: building execution...")
         execution = self.execution_builder.build(
             decision,
         )
+        print("[4/6] LiveExecutionBuilder: done")
 
+        print("[5/6] IBKRClient: connecting...")
         self.ibkr_client.connect()
+        print("[5/6] IBKRClient: connected")
 
         try:
+            print("[6/6] IBKRClient: executing orders...")
             return self.ibkr_client.execute(
                 execution,
             )
         finally:
+            print("[6/6] IBKRClient: closing connection...")
             self.ibkr_client.close()
+            print("[6/6] IBKRClient: closed")

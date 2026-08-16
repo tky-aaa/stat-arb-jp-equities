@@ -63,17 +63,24 @@ class LiveLongOrchestrator:
             )
 
     def run(self) -> None:
+        print("[1/4] DataAPI: loading prices...")
         prices = self.data_api.service()
+        print("[1/4] DataAPI: done")
 
+        print("[2/4] ScreeningAPI: screening...")
         subgroups = self.screening_api.service(
             prices,
         )
+        print(f"[2/4] ScreeningAPI: done ({len(subgroups)} subgroups)")
 
+        print("[3/4] CointegrationAPI: analyzing...")
         analyses = self.cointegration_api.service(
             prices,
             subgroups,
         )
+        print(f"[3/4] CointegrationAPI: done ({len(analyses)} analyses)")
 
+        print("[4/4] LiveStrategyStorage: saving strategy...")
         strategy = LiveStrategy(
             analyses=analyses,
             training_start=self.config.training_start,
@@ -84,3 +91,4 @@ class LiveLongOrchestrator:
             strategy,
             Path(self.config.strategy_path),
         )
+        print("[4/4] LiveStrategyStorage: done")
