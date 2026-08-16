@@ -55,6 +55,7 @@ def test_run_passes_contracts_through_pipeline() -> None:
     cointegration_api = Mock()
     portfolio_api = Mock()
     backtest_api = Mock()
+    report_api = Mock()
 
     data_api.service.return_value = prices
     screening_api.service.return_value = subgroups
@@ -69,6 +70,7 @@ def test_run_passes_contracts_through_pipeline() -> None:
         cointegration_api=cointegration_api,
         portfolio_api=portfolio_api,
         backtest_api=backtest_api,
+        report_api=report_api,
     )
 
     orchestrator.run()
@@ -85,4 +87,13 @@ def test_run_passes_contracts_through_pipeline() -> None:
     )
     backtest_api.service.assert_called_once_with(
         decision,
+    )
+
+    report_api.service.assert_called_once_with(
+        {
+            "screening": subgroups,
+            "cointegration": analyses,
+            "portfolio": decision,
+            "backtest": result,
+        },
     )

@@ -117,12 +117,6 @@ class BacktestMetrics:
 
 
 @dataclass(frozen=True)
-class BacktestReport:
-    metrics: BacktestMetrics
-    equity: pd.Series
-
-
-@dataclass(frozen=True)
 class LiveStrategy:
     analyses: list[CointegrationAnalysis]
     training_start: str

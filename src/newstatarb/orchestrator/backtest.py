@@ -5,6 +5,7 @@ from newstatarb.core.backtest.api import BacktestAPI
 from newstatarb.core.cointegration.api import CointegrationAPI
 from newstatarb.core.data.api import DataAPI
 from newstatarb.core.portfolio.api import PortfolioAPI
+from newstatarb.core.report.api import ReportAPI
 from newstatarb.core.screening.api import ScreeningAPI
 from newstatarb.core.signal.api import SignalAPI
 
@@ -17,6 +18,7 @@ class BacktestOrchestrator:
     cointegration_api: CointegrationAPI | None = None
     portfolio_api: PortfolioAPI | None = None
     backtest_api: BacktestAPI | None = None
+    report_api: ReportAPI | None = None
 
     def __post_init__(self) -> None:
         if self.data_api is None:
@@ -83,6 +85,15 @@ class BacktestOrchestrator:
                 ),
             )
 
+        if self.report_api is None:
+            object.__setattr__(
+                self,
+                "report_api",
+                ReportAPI(
+                    results_path=self.config.results_path,
+                ),
+            )
+
     def run(self) -> None:
         prices = self.data_api.service()
 
@@ -104,9 +115,11 @@ class BacktestOrchestrator:
             decision,
         )
 
-        self._handle_result(
-            result,
+        self.report_api.service(
+            {
+                "screening": subgroups,
+                "cointegration": analyses,
+                "portfolio": decision,
+                "backtest": result,
+            },
         )
-
-    def _handle_result(self, result) -> None:
-        pass

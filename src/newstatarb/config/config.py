@@ -28,6 +28,7 @@ class BacktestConfig:
 
     top_n_spreads: int = 10
 
+    results_path: str = "results"
     initial_capital: float = 1.0
     broker: str = "IBKR"
     paper_trading: bool = True
