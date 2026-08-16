@@ -16,6 +16,31 @@ class ReportAPI:
         self.storage = storage or ReportStorage()
         self.metrics_calculator = metrics_calculator or BacktestMetricsCalculator()
 
+    def create_experiment_path(self) -> Path:
+        experiment_id = datetime.now(UTC).strftime(
+            "%Y%m%d_%H%M%S_%f",
+        )
+
+        experiment_path = self.results_path / experiment_id
+
+        experiment_path.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        return experiment_path
+
+    def save_checkpoint(
+        self,
+        experiment_path: Path,
+        name: str,
+        output: object,
+    ) -> None:
+        self.storage.save(
+            output,
+            experiment_path / "checkpoint" / f"{name}.pkl",
+        )
+
     def service(
         self,
         outputs: dict[str, object],
@@ -34,11 +59,7 @@ class ReportAPI:
                 decision.signals,
             )
 
-        experiment_id = datetime.now(UTC).strftime(
-            "%Y%m%d_%H%M%S_%f",
-        )
-
-        experiment_path = self.results_path / experiment_id
+        experiment_path = self.create_experiment_path()
 
         for name, output in outputs.items():
             self.storage.save(

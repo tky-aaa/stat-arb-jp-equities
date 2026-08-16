@@ -14,6 +14,8 @@ class Universe:
         match self.name:
             case "topix10":
                 return self._load("topix10.csv")
+            case "topix50":
+                return self._load("topix50.csv")
             case "topix100":
                 return self._load("topix100.csv")
             case "topix500":

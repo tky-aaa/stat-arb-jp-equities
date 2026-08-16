@@ -59,3 +59,36 @@ def test_service_rejects_empty_outputs(tmp_path: Path) -> None:
         ReportAPI(
             results_path=str(tmp_path),
         ).service({})
+
+
+def test_create_experiment_path(tmp_path: Path) -> None:
+    api = ReportAPI(
+        results_path=str(tmp_path),
+    )
+
+    experiment_path = api.create_experiment_path()
+
+    assert experiment_path.parent == tmp_path
+    assert experiment_path.is_dir()
+
+
+def test_save_checkpoint(tmp_path: Path) -> None:
+    api = ReportAPI(
+        results_path=str(tmp_path),
+    )
+
+    experiment_path = api.create_experiment_path()
+
+    api.save_checkpoint(
+        experiment_path,
+        "prices",
+        {"value": 1},
+    )
+
+    checkpoint = experiment_path / "checkpoint" / "prices.pkl"
+
+    assert checkpoint.exists()
+
+    loaded = api.storage.load(checkpoint)
+
+    assert loaded == {"value": 1}

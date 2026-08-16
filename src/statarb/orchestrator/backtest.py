@@ -96,43 +96,62 @@ class BacktestOrchestrator:
 
     def run(self) -> None:
         print("[1/6] DataAPI: loading prices...")
+
         prices = self.data_api.service()
+
         print("[1/6] DataAPI: done")
 
         print("[2/6] ScreeningAPI: screening...")
+
         subgroups = self.screening_api.service(
             prices,
         )
-        print(f"[2/6] ScreeningAPI: done ({len(subgroups)} subgroups)")
+
+        print(
+            f"[2/6] ScreeningAPI: done ({len(subgroups)} subgroups)",
+        )
 
         print("[3/6] CointegrationAPI: analyzing...")
+
         analyses = self.cointegration_api.service(
             prices,
             subgroups,
         )
-        print(f"[3/6] CointegrationAPI: done ({len(analyses)} analyses)")
+
+        print(
+            f"[3/6] CointegrationAPI: done ({len(analyses)} analyses)",
+        )
 
         print("[4/6] PortfolioAPI: generating portfolio...")
+
         decision = self.portfolio_api.service(
             prices,
             analyses,
         )
-        print(f"[4/6] PortfolioAPI: done ({len(decision.signals)} signals)")
+
+        print(
+            f"[4/6] PortfolioAPI: done ({len(decision.signals)} signals)",
+        )
 
         print("[5/6] BacktestAPI: calculating returns...")
+
         result = self.backtest_api.service(
             prices,
             decision,
         )
+
         print("[5/6] BacktestAPI: done")
 
         print("[6/6] ReportAPI: saving results...")
+
         self.report_api.service(
             {
+                "prices": prices,
                 "screening": subgroups,
                 "cointegration": analyses,
                 "portfolio": decision,
                 "backtest": result,
             },
         )
+
         print("[6/6] ReportAPI: done")
