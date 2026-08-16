@@ -1,4 +1,3 @@
-from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 
 import numpy as np
@@ -6,9 +5,24 @@ import numpy as np
 from statarb.config.contract import (
     CointegrationAnalysis,
     Prices,
+    SpreadEvaluation,
     SubGroup,
 )
-from statarb.core.cointegration.worker import CointegrationWorker
+from statarb.core.cointegration.distribution_evaluator import (
+    DistributionEvaluator,
+)
+from statarb.core.cointegration.johansen_tester import (
+    JohansenTester,
+)
+from statarb.core.cointegration.mean_reversion_evaluator import (
+    MeanReversionEvaluator,
+)
+from statarb.core.cointegration.spread_creator import (
+    SpreadCreator,
+)
+from statarb.core.cointegration.stationarity_evaluator import (
+    StationarityEvaluator,
+)
 
 
 @dataclass(frozen=True)
@@ -20,33 +34,65 @@ class CointegrationAPI:
         prices: Prices,
         subgroups: list[SubGroup],
     ) -> list[CointegrationAnalysis]:
+
         log_prices = np.log(prices.training)
 
-        if not subgroups:
-            return []
+        johansen_tester = JohansenTester()
+        spread_creator = SpreadCreator()
+        stationarity_evaluator = StationarityEvaluator()
+        mean_reversion_evaluator = MeanReversionEvaluator()
+        distribution_evaluator = DistributionEvaluator()
 
-        batch_size = 1_000
+        analyses = []
 
-        workers = [
-            CointegrationWorker(
-                log_prices=log_prices,
-                subgroups=subgroups[start : start + batch_size],
-                persistence_days=self.persistence_days,
+        for subgroup in subgroups:
+            selected_log_prices = log_prices[subgroup.tickers]
+
+            result = johansen_tester.estimate_cointegration(
+                log_prices=selected_log_prices,
             )
-            for start in range(
-                0,
-                len(subgroups),
-                batch_size,
-            )
-        ]
 
-        analyses: list[CointegrationAnalysis] = []
+            if result.rank <= 0:
+                continue
 
-        with ProcessPoolExecutor() as executor:
-            for worker_analyses in executor.map(
-                CointegrationWorker.analyze,
-                workers,
-            ):
-                analyses.extend(worker_analyses)
+            for beta_index in range(result.rank):
+                beta = result.beta[:, beta_index]
+
+                spread = spread_creator.create(
+                    prices=selected_log_prices,
+                    tickers=result.tickers,
+                    beta=beta,
+                    beta_index=beta_index,
+                )
+
+                stationarity = stationarity_evaluator.evaluate(
+                    spread,
+                )
+
+                mean_reversion = mean_reversion_evaluator.evaluate(
+                    spread,
+                    persistence_window=(self.persistence_days),
+                )
+
+                distribution = distribution_evaluator.evaluate(
+                    spread,
+                )
+
+                evaluation = SpreadEvaluation(
+                    **stationarity,
+                    **mean_reversion,
+                    **distribution,
+                )
+
+                analyses.append(
+                    CointegrationAnalysis(
+                        tickers=result.tickers,
+                        rank=result.rank,
+                        beta_index=beta_index,
+                        beta=beta,
+                        spread=spread,
+                        evaluation=evaluation,
+                    )
+                )
 
         return analyses
