@@ -5,12 +5,12 @@ from dataclasses import dataclass
 class BacktestConfig:
     universe: str = "topix100"
 
-    training_start: str = "2025-06-01"
+    training_start: str = "2025-01-01"
     training_end: str = "2025-10-01"
     test_start: str = "2025-10-01"
-    test_end: str = "2026-01-01"
+    test_end: str = "2026-06-01"
 
-    screening_method: str = "full"  # ("full", "pca", "ff3")
+    screening_method: str = "pca"  # ("full", "pca", "ff3")
     n_clusters: int = 20
     min_cluster_size: int = 5
     max_cluster_size: int = 50
@@ -22,7 +22,7 @@ class BacktestConfig:
 
     zscore_window: int = 60
     entry_threshold: float = 2.0
-    exit_threshold: float = 0.5
+    exit_threshold: float = 0.25
     threshold_method: str = "fixed"  # ("fixed", "gaussian", "empirical")
     spread_method: str = "fixed"  # ("static", "kalman")
 

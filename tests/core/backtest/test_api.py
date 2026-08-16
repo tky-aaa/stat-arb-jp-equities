@@ -4,6 +4,7 @@ import pytest
 from statarb.config.contract import (
     CointegrationAnalysis,
     PortfolioDecision,
+    Prices,
     Signal,
     Spread,
     SpreadEvaluation,
@@ -81,6 +82,25 @@ def make_signal(
     )
 
 
+def make_prices(signal: Signal) -> Prices:
+    return Prices(
+        training=pd.DataFrame(
+            {
+                "AAA": [100.0] * len(signal.spread),
+                "BBB": [100.0] * len(signal.spread),
+            },
+            index=signal.spread.index,
+        ),
+        test=pd.DataFrame(
+            {
+                "AAA": [100.0, 102.0, 100.0, 101.0][: len(signal.spread)],
+                "BBB": [100.0] * len(signal.spread),
+            },
+            index=signal.spread.index,
+        ),
+    )
+
+
 def test_service_calculates_portfolio_result() -> None:
     analysis = make_analysis()
 
@@ -88,6 +108,8 @@ def test_service_calculates_portfolio_result() -> None:
         [10.0, 11.0, 9.0, 10.0],
         [0.0, 1.0, -1.0, 1.0],
     )
+
+    prices = make_prices(signal)
 
     decision = PortfolioDecision(
         analyses=[analysis],
@@ -98,11 +120,17 @@ def test_service_calculates_portfolio_result() -> None:
     result = BacktestAPI(
         initial_capital=100.0,
     ).service(
+        prices,
         decision,
     )
 
     expected_pnl = pd.Series(
-        [None, 0.0, -1.0, -0.5],
+        [
+            0.0,
+            0.0,
+            -0.004901960784313736,
+            -0.0025,
+        ],
         index=signal.spread.index,
         name="portfolio_return",
     )
@@ -141,18 +169,26 @@ def test_service_rejects_mismatched_analyses_and_weights() -> None:
         weights=[],
     )
 
+    prices = make_prices(signal)
+
     with pytest.raises(
         ValueError,
         match="Number of analyses and weights must match",
     ):
         BacktestAPI().service(
+            prices,
             decision,
         )
 
 
 def test_service_rejects_mismatched_analyses_and_signals() -> None:
     analysis = make_analysis()
+    signal = make_signal(
+        [10.0, 11.0],
+        [0.0, 1.0],
+    )
 
+    prices = make_prices(signal)
     decision = PortfolioDecision(
         analyses=[analysis],
         signals=[],
@@ -164,6 +200,7 @@ def test_service_rejects_mismatched_analyses_and_signals() -> None:
         match="Number of analyses and signals must match",
     ):
         BacktestAPI().service(
+            prices,
             decision,
         )
 
@@ -182,6 +219,8 @@ def test_service_rejects_nonpositive_initial_capital() -> None:
         weights=[1.0],
     )
 
+    prices = make_prices(signal)
+
     with pytest.raises(
         ValueError,
         match="initial_capital must be positive",
@@ -189,5 +228,6 @@ def test_service_rejects_nonpositive_initial_capital() -> None:
         BacktestAPI(
             initial_capital=0.0,
         ).service(
+            prices,
             decision,
         )

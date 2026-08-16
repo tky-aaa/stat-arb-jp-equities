@@ -1,20 +1,38 @@
 import pandas as pd
 
-from statarb.config.contract import Signal
+from statarb.config.contract import (
+    CointegrationAnalysis,
+    Signal,
+)
 
 
 class ReturnCalculator:
     def calculate(
         self,
+        prices: pd.DataFrame,
+        analysis: CointegrationAnalysis,
         signal: Signal,
     ) -> pd.Series:
 
-        spread_change = signal.spread.diff()
+        asset_returns = prices[analysis.tickers].pct_change()
+
+        beta = pd.Series(
+            analysis.beta,
+            index=analysis.tickers,
+        )
+
+        normalized_beta = beta / beta.abs().sum()
+
+        spread_return = asset_returns.mul(
+            normalized_beta,
+            axis=1,
+        ).sum(axis=1)
 
         position = signal.position.shift(1)
 
-        strategy_pnl = position * spread_change
+        strategy_return = position * spread_return
+        strategy_return = strategy_return.fillna(0.0)
 
-        strategy_pnl.name = "pnl"
+        strategy_return.name = "pnl"
 
-        return strategy_pnl
+        return strategy_return

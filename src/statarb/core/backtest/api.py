@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from statarb.config.contract import (
     BacktestResult,
     PortfolioDecision,
+    Prices,
 )
 from statarb.core.backtest.portfolio_return_calculator import (
     PortfolioReturnCalculator,
@@ -16,6 +17,7 @@ class BacktestAPI:
 
     def service(
         self,
+        prices: Prices,
         decision: PortfolioDecision,
     ) -> BacktestResult:
 
@@ -31,7 +33,17 @@ class BacktestAPI:
         return_calculator = ReturnCalculator()
         portfolio_return_calculator = PortfolioReturnCalculator()
 
-        returns = [return_calculator.calculate(signal) for signal in decision.signals]
+        returns = [
+            return_calculator.calculate(
+                prices.test,
+                analysis,
+                signal,
+            )
+            for analysis, signal in zip(
+                decision.analyses,
+                decision.signals,
+            )
+        ]
 
         portfolio_pnl = portfolio_return_calculator.calculate(
             returns,
