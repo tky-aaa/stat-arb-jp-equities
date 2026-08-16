@@ -12,30 +12,33 @@ class YahooFinanceLoader(PriceDataLoader):
         start: str,
         end: str,
     ) -> pd.DataFrame:
-        prices = []
+        symbols = [instrument.yahoo_symbol() for instrument in instruments]
 
-        for instrument in instruments:
-            data = yf.download(
-                instrument.yahoo_symbol(),
-                start=start,
-                end=end,
-                auto_adjust=True,
-                progress=False,
-                threads=False,
-            )
+        data = yf.download(
+            symbols,
+            start=start,
+            end=end,
+            auto_adjust=True,
+            progress=False,
+            threads=False,
+        )
 
-            if data.empty:
-                continue
-
-            close = data["Close"]
-
-            if isinstance(close, pd.DataFrame):
-                close = close.iloc[:, 0]
-
-            close = close.rename(instrument.ticker)
-            prices.append(close)
-
-        if not prices:
+        if data.empty:
             raise ValueError("No price data was retrieved.")
 
-        return pd.concat(prices, axis=1)
+        close = data["Close"]
+
+        if isinstance(close, pd.Series):
+            close = close.rename(
+                instruments[0].ticker,
+            ).to_frame()
+
+        else:
+            close = close.rename(
+                columns={
+                    instrument.yahoo_symbol(): instrument.ticker
+                    for instrument in instruments
+                },
+            )
+
+        return close
