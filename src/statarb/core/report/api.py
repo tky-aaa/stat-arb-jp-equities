@@ -47,6 +47,7 @@ class ReportAPI:
     def service(
         self,
         outputs: dict[str, object],
+        experiment_path: Path | None = None,
     ) -> Path:
         if not outputs:
             raise ValueError("outputs must not be empty.")
@@ -62,13 +63,16 @@ class ReportAPI:
                 decision.signals,
             )
 
-        experiment_path = self.create_experiment_path()
+        if experiment_path is None:
+            experiment_path = self.create_experiment_path()
 
-        for name, output in outputs.items():
-            self.storage.save(
-                output,
-                experiment_path / f"{name}.pkl",
-            )
+        for name in ("config", "metrics"):
+            if name in outputs:
+                self.save_checkpoint(
+                    experiment_path,
+                    name,
+                    outputs[name],
+                )
 
         self.exporter.export(
             experiment_path,

@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 import pandas as pd
 
@@ -57,6 +57,9 @@ def test_run_passes_contracts_through_pipeline() -> None:
     backtest_api = Mock()
     report_api = Mock()
 
+    experiment_path = Mock()
+    report_api.create_experiment_path.return_value = experiment_path
+
     data_api.service.return_value = prices
     screening_api.service.return_value = subgroups
     cointegration_api.service.return_value = analyses
@@ -90,6 +93,36 @@ def test_run_passes_contracts_through_pipeline() -> None:
         decision,
     )
 
+    report_api.create_experiment_path.assert_called_once_with()
+
+    assert report_api.save_checkpoint.call_args_list == [
+        call(
+            experiment_path,
+            "prices",
+            prices,
+        ),
+        call(
+            experiment_path,
+            "screening",
+            subgroups,
+        ),
+        call(
+            experiment_path,
+            "cointegration",
+            analyses,
+        ),
+        call(
+            experiment_path,
+            "portfolio",
+            decision,
+        ),
+        call(
+            experiment_path,
+            "backtest",
+            result,
+        ),
+    ]
+
     report_api.service.assert_called_once_with(
         {
             "config": config,
@@ -99,4 +132,5 @@ def test_run_passes_contracts_through_pipeline() -> None:
             "portfolio": decision,
             "backtest": result,
         },
+        experiment_path=experiment_path,
     )

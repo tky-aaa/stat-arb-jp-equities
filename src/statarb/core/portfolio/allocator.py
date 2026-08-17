@@ -39,15 +39,10 @@ class PortfolioAllocator:
 
         weights = inverse_volatility / inverse_volatility.sum()
 
-        print("[PortfolioAllocator] before cap:", weights)
-        print("[PortfolioAllocator] max_weight:", max_weight)
-
         weights = self._cap_weights(
             weights,
             max_weight=max_weight,
         )
-
-        print("[PortfolioAllocator] after cap:", weights)
 
         return weights.tolist()
 

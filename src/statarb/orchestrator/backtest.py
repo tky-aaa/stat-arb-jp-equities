@@ -95,9 +95,17 @@ class BacktestOrchestrator:
             )
 
     def run(self) -> None:
+        experiment_path = self.report_api.create_experiment_path()
+
         print("[1/6] DataAPI: loading prices...")
 
         prices = self.data_api.service()
+
+        self.report_api.save_checkpoint(
+            experiment_path,
+            "prices",
+            prices,
+        )
 
         print("[1/6] DataAPI: done")
 
@@ -105,6 +113,12 @@ class BacktestOrchestrator:
 
         subgroups = self.screening_api.service(
             prices,
+        )
+
+        self.report_api.save_checkpoint(
+            experiment_path,
+            "screening",
+            subgroups,
         )
 
         print(
@@ -118,6 +132,12 @@ class BacktestOrchestrator:
             subgroups,
         )
 
+        self.report_api.save_checkpoint(
+            experiment_path,
+            "cointegration",
+            analyses,
+        )
+
         print(f"[3/6] CointegrationAPI: done ({len(analyses)} analyses)")
 
         print("[4/6] PortfolioAPI: generating portfolio...")
@@ -127,6 +147,12 @@ class BacktestOrchestrator:
             analyses,
         )
 
+        self.report_api.save_checkpoint(
+            experiment_path,
+            "portfolio",
+            decision,
+        )
+
         print(f"[4/6] PortfolioAPI: done ({len(decision.signals)} signals)")
 
         print("[5/6] BacktestAPI: calculating returns...")
@@ -134,6 +160,12 @@ class BacktestOrchestrator:
         result = self.backtest_api.service(
             prices,
             decision,
+        )
+
+        self.report_api.save_checkpoint(
+            experiment_path,
+            "backtest",
+            result,
         )
 
         print("[5/6] BacktestAPI: done")
@@ -149,6 +181,7 @@ class BacktestOrchestrator:
                 "portfolio": decision,
                 "backtest": result,
             },
+            experiment_path=experiment_path,
         )
 
         print("[6/6] ReportAPI: done")

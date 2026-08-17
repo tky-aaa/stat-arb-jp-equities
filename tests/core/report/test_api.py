@@ -6,17 +6,47 @@ import pytest
 from statarb.config.config import BacktestConfig
 from statarb.config.contract import (
     BacktestResult,
+    CointegrationAnalysis,
+    Spread,
+    SpreadEvaluation,
     SubGroup,
 )
 from statarb.core.report.api import ReportAPI
 
 
 def test_service_saves_outputs(tmp_path: Path) -> None:
+    analysis = CointegrationAnalysis(
+        tickers=["A", "B"],
+        rank=1,
+        beta_index=0,
+        beta=pd.Series([1.0, -1.0]).to_numpy(),
+        spread=Spread(
+            tickers=["A", "B"],
+            beta=pd.Series([1.0, -1.0]).to_numpy(),
+            beta_index=0,
+            values=pd.Series([0.0, 0.1]),
+        ),
+        evaluation=SpreadEvaluation(
+            adf_stat=-2.0,
+            adf_pvalue=0.05,
+            kpss_stat=0.1,
+            kpss_pvalue=0.1,
+            rho1=0.5,
+            phi=0.5,
+            half_life=1.0,
+            persistence=0.5,
+            mean=0.0,
+            variance=1.0,
+            std=1.0,
+            portmanteau=0.1,
+        ),
+    )
+
     outputs = {
         "screening": [
             SubGroup(tickers=["A", "B"]),
         ],
-        "cointegration": {"ticker": "A"},
+        "cointegration": [analysis],
         "backtest": BacktestResult(
             pnl=pd.Series([0.0, 0.1]),
             cumulative_pnl=pd.Series([0.0, 0.1]),
@@ -31,51 +61,13 @@ def test_service_saves_outputs(tmp_path: Path) -> None:
     assert experiment_path.parent == tmp_path
     assert experiment_path.is_dir()
 
-    assert (experiment_path / "screening.pkl").exists()
-    assert (experiment_path / "cointegration.pkl").exists()
-    assert (experiment_path / "backtest.pkl").exists()
+    assert (experiment_path / "screening.csv").exists()
+    assert (experiment_path / "cointegration.csv").exists()
+    assert (experiment_path / "backtest.csv").exists()
 
-
-def test_service_preserves_outputs(tmp_path: Path) -> None:
-    outputs = {
-        "screening": [
-            SubGroup(tickers=["A", "B"]),
-        ],
-        "backtest": BacktestResult(
-            pnl=pd.Series([0.0, 0.1]),
-            cumulative_pnl=pd.Series([0.0, 0.1]),
-            equity=pd.Series([1.0, 1.1]),
-        ),
-    }
-
-    api = ReportAPI(
-        results_path=str(tmp_path),
-    )
-
-    experiment_path = api.service(outputs)
-
-    screening = api.storage.load(
-        experiment_path / "screening.pkl",
-    )
-    backtest = api.storage.load(
-        experiment_path / "backtest.pkl",
-    )
-
-    assert screening == [
-        SubGroup(tickers=["A", "B"]),
-    ]
-    pd.testing.assert_series_equal(
-        backtest.pnl,
-        outputs["backtest"].pnl,
-    )
-    pd.testing.assert_series_equal(
-        backtest.cumulative_pnl,
-        outputs["backtest"].cumulative_pnl,
-    )
-    pd.testing.assert_series_equal(
-        backtest.equity,
-        outputs["backtest"].equity,
-    )
+    assert not (experiment_path / "screening.pkl").exists()
+    assert not (experiment_path / "cointegration.pkl").exists()
+    assert not (experiment_path / "backtest.pkl").exists()
 
 
 def test_service_rejects_empty_outputs(tmp_path: Path) -> None:
@@ -132,12 +124,13 @@ def test_service_saves_config(tmp_path: Path) -> None:
         },
     )
 
-    assert (experiment_path / "config.pkl").exists()
+    assert (experiment_path / "checkpoint" / "config.pkl").exists()
+    assert not (experiment_path / "config.pkl").exists()
 
     loaded = ReportAPI(
         results_path=str(tmp_path),
     ).storage.load(
-        experiment_path / "config.pkl",
+        experiment_path / "checkpoint" / "config.pkl",
     )
 
     assert loaded == config

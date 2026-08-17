@@ -7,6 +7,8 @@ from statarb.config.config import BacktestConfig
 from statarb.config.contract import (
     BacktestMetrics,
     BacktestResult,
+    CointegrationAnalysis,
+    PortfolioDecision,
     Prices,
     SubGroup,
 )
@@ -38,6 +40,18 @@ class ReportExporter:
 
             elif name == "screening":
                 self._export_screening(
+                    output_path,
+                    output,
+                )
+
+            elif name == "cointegration":
+                self._export_cointegration(
+                    output_path,
+                    output,
+                )
+
+            elif name == "portfolio":
+                self._export_portfolio(
                     output_path,
                     output,
                 )
@@ -110,6 +124,102 @@ class ReportExporter:
 
         frame.to_csv(
             output_path / "screening.csv",
+            index=False,
+        )
+
+    def _export_cointegration(
+        self,
+        output_path: Path,
+        analyses: object,
+    ) -> None:
+        if not isinstance(analyses, list):
+            raise TypeError(
+                "cointegration must be a list of CointegrationAnalysis.",
+            )
+
+        if not all(
+            isinstance(analysis, CointegrationAnalysis) for analysis in analyses
+        ):
+            raise TypeError(
+                "cointegration must contain only CointegrationAnalysis objects.",
+            )
+
+        rows: list[dict[str, object]] = []
+
+        for analysis in analyses:
+            evaluation = analysis.evaluation
+
+            for timestamp, spread in analysis.spread.values.items():
+                rows.append(
+                    {
+                        "timestamp": timestamp,
+                        "tickers": "_".join(analysis.tickers),
+                        "rank": analysis.rank,
+                        "beta_index": analysis.beta_index,
+                        "beta": str(analysis.beta.tolist()),
+                        "adf_stat": evaluation.adf_stat,
+                        "adf_pvalue": evaluation.adf_pvalue,
+                        "kpss_stat": evaluation.kpss_stat,
+                        "kpss_pvalue": evaluation.kpss_pvalue,
+                        "rho1": evaluation.rho1,
+                        "phi": evaluation.phi,
+                        "half_life": evaluation.half_life,
+                        "persistence": evaluation.persistence,
+                        "mean": evaluation.mean,
+                        "variance": evaluation.variance,
+                        "std": evaluation.std,
+                        "portmanteau": evaluation.portmanteau,
+                        "spread": spread,
+                    },
+                )
+
+        frame = pd.DataFrame(rows)
+
+        frame.to_csv(
+            output_path / "cointegration.csv",
+            index=False,
+        )
+
+    def _export_portfolio(
+        self,
+        output_path: Path,
+        portfolio: object,
+    ) -> None:
+        if not isinstance(portfolio, PortfolioDecision):
+            raise TypeError(
+                "portfolio must be a PortfolioDecision.",
+            )
+
+        if not (
+            len(portfolio.analyses) == len(portfolio.signals) == len(portfolio.weights)
+        ):
+            raise ValueError(
+                "portfolio analyses, signals, and weights must have the same length.",
+            )
+
+        rows: list[dict[str, object]] = []
+
+        for analysis, signal, weight in zip(
+            portfolio.analyses,
+            portfolio.signals,
+            portfolio.weights,
+        ):
+            for timestamp in signal.position.index:
+                rows.append(
+                    {
+                        "timestamp": timestamp,
+                        "tickers": "_".join(analysis.tickers),
+                        "weight": weight,
+                        "spread": signal.spread.loc[timestamp],
+                        "zscore": signal.zscore.loc[timestamp],
+                        "position": signal.position.loc[timestamp],
+                    },
+                )
+
+        frame = pd.DataFrame(rows)
+
+        frame.to_csv(
+            output_path / "portfolio.csv",
             index=False,
         )
 

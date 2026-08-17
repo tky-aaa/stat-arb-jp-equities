@@ -85,10 +85,6 @@ class SignalAPI:
                     position=position,
                 )
             )
-            print(
-                f"[PortfolioAPI] signal {i}/{len(analyses)}: "
-                f"{time.perf_counter() - start:.2f}s",
-            )
 
         return signals
 

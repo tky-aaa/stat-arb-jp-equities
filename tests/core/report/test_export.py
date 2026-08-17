@@ -6,7 +6,12 @@ from statarb.config.config import BacktestConfig
 from statarb.config.contract import (
     BacktestMetrics,
     BacktestResult,
+    CointegrationAnalysis,
+    PortfolioDecision,
     Prices,
+    Signal,
+    Spread,
+    SpreadEvaluation,
     SubGroup,
 )
 from statarb.core.report.export import ReportExporter
@@ -95,6 +100,162 @@ def test_export_screening(tmp_path: Path) -> None:
         "A_B",
         "C_D_E",
     ]
+
+
+def test_export_cointegration(tmp_path: Path) -> None:
+    exporter = ReportExporter()
+
+    spread = Spread(
+        tickers=["A", "B"],
+        beta=pd.Series([1.0, -0.5]).to_numpy(),
+        beta_index=0,
+        values=pd.Series(
+            [0.1, 0.2],
+            index=pd.date_range("2026-01-01", periods=2),
+        ),
+    )
+
+    evaluation = SpreadEvaluation(
+        adf_stat=-3.0,
+        adf_pvalue=0.01,
+        kpss_stat=0.2,
+        kpss_pvalue=0.1,
+        rho1=0.8,
+        phi=0.8,
+        half_life=3.1,
+        persistence=0.8,
+        mean=0.15,
+        variance=0.0025,
+        std=0.05,
+        portmanteau=2.0,
+    )
+
+    analysis = CointegrationAnalysis(
+        tickers=["A", "B"],
+        rank=1,
+        beta_index=0,
+        beta=pd.Series([1.0, -0.5]).to_numpy(),
+        spread=spread,
+        evaluation=evaluation,
+    )
+
+    exporter.export(
+        tmp_path,
+        {"cointegration": [analysis]},
+    )
+
+    frame = pd.read_csv(
+        tmp_path / "cointegration.csv",
+    )
+
+    assert list(frame.columns) == [
+        "timestamp",
+        "tickers",
+        "rank",
+        "beta_index",
+        "beta",
+        "adf_stat",
+        "adf_pvalue",
+        "kpss_stat",
+        "kpss_pvalue",
+        "rho1",
+        "phi",
+        "half_life",
+        "persistence",
+        "mean",
+        "variance",
+        "std",
+        "portmanteau",
+        "spread",
+    ]
+
+    assert len(frame) == 2
+    assert frame["tickers"].tolist() == ["A_B", "A_B"]
+    assert frame["rank"].tolist() == [1, 1]
+    assert frame["spread"].tolist() == [0.1, 0.2]
+
+
+def test_export_portfolio(tmp_path: Path) -> None:
+    exporter = ReportExporter()
+
+    spread = Spread(
+        tickers=["A", "B"],
+        beta=pd.Series([1.0, -0.5]).to_numpy(),
+        beta_index=0,
+        values=pd.Series(
+            [0.1, 0.2],
+            index=pd.date_range("2026-01-01", periods=2),
+        ),
+    )
+
+    evaluation = SpreadEvaluation(
+        adf_stat=-3.0,
+        adf_pvalue=0.01,
+        kpss_stat=0.2,
+        kpss_pvalue=0.1,
+        rho1=0.8,
+        phi=0.8,
+        half_life=3.1,
+        persistence=0.8,
+        mean=0.15,
+        variance=0.0025,
+        std=0.05,
+        portmanteau=2.0,
+    )
+
+    analysis = CointegrationAnalysis(
+        tickers=["A", "B"],
+        rank=1,
+        beta_index=0,
+        beta=pd.Series([1.0, -0.5]).to_numpy(),
+        spread=spread,
+        evaluation=evaluation,
+    )
+
+    signal = Signal(
+        spread=pd.Series(
+            [0.1, 0.2],
+            index=pd.date_range("2026-01-01", periods=2),
+        ),
+        zscore=pd.Series(
+            [1.0, 2.0],
+            index=pd.date_range("2026-01-01", periods=2),
+        ),
+        position=pd.Series(
+            [0.0, -1.0],
+            index=pd.date_range("2026-01-01", periods=2),
+        ),
+    )
+
+    portfolio = PortfolioDecision(
+        analyses=[analysis],
+        signals=[signal],
+        weights=[0.1],
+    )
+
+    exporter.export(
+        tmp_path,
+        {"portfolio": portfolio},
+    )
+
+    frame = pd.read_csv(
+        tmp_path / "portfolio.csv",
+    )
+
+    assert list(frame.columns) == [
+        "timestamp",
+        "tickers",
+        "weight",
+        "spread",
+        "zscore",
+        "position",
+    ]
+
+    assert len(frame) == 2
+    assert frame["tickers"].tolist() == ["A_B", "A_B"]
+    assert frame["weight"].tolist() == [0.1, 0.1]
+    assert frame["zscore"].tolist() == [1.0, 2.0]
+    assert frame["position"].tolist() == [0.0, -1.0]
 
 
 def test_export_backtest(tmp_path: Path) -> None:
