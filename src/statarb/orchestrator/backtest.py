@@ -146,6 +146,7 @@ class BacktestOrchestrator:
 
         self.report_api.service(
             {
+                "config": self.config,
                 "prices": prices,
                 "screening": subgroups,
                 "cointegration": analyses,

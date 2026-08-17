@@ -3,6 +3,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from statarb.config.config import BacktestConfig
 from statarb.core.report.api import ReportAPI
 
 
@@ -92,3 +93,25 @@ def test_save_checkpoint(tmp_path: Path) -> None:
     loaded = api.storage.load(checkpoint)
 
     assert loaded == {"value": 1}
+
+
+def test_service_saves_config(tmp_path: Path) -> None:
+    config = BacktestConfig()
+
+    experiment_path = ReportAPI(
+        results_path=str(tmp_path),
+    ).service(
+        {
+            "config": config,
+        },
+    )
+
+    assert (experiment_path / "config.pkl").exists()
+
+    loaded = ReportAPI(
+        results_path=str(tmp_path),
+    ).storage.load(
+        experiment_path / "config.pkl",
+    )
+
+    assert loaded == config

@@ -92,6 +92,7 @@ def test_run_passes_contracts_through_pipeline() -> None:
 
     report_api.service.assert_called_once_with(
         {
+            "config": config,
             "prices": prices,
             "screening": subgroups,
             "cointegration": analyses,
