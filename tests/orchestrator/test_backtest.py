@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest.mock import Mock, call
 
 import pandas as pd
@@ -134,3 +135,63 @@ def test_run_passes_contracts_through_pipeline() -> None:
         },
         experiment_path=experiment_path,
     )
+
+
+def test_init_builds_apis_from_config() -> None:
+    config = BacktestConfig(
+        universe="topix10",
+        training_start="2025-02-01",
+        training_end="2025-11-30",
+        test_start="2026-02-01",
+        test_end="2026-06-30",
+        screening_method="pca",
+        n_clusters=7,
+        min_cluster_size=4,
+        max_cluster_size=15,
+        min_assets=2,
+        max_assets=3,
+        pca_components=4,
+        persistence_days=45,
+        zscore_window=50,
+        entry_threshold=2.5,
+        exit_threshold=0.4,
+        threshold_method="empirical",
+        spread_method="kalman",
+        top_n_spreads=3,
+        results_path="test_results",
+        initial_capital=2.0,
+    )
+
+    orchestrator = BacktestOrchestrator(config)
+
+    assert orchestrator.data_api.universe == config.universe
+    assert orchestrator.data_api.training_start == config.training_start
+    assert orchestrator.data_api.training_end == config.training_end
+    assert orchestrator.data_api.test_start == config.test_start
+    assert orchestrator.data_api.test_end == config.test_end
+
+    assert orchestrator.screening_api.screening_method == config.screening_method
+    assert orchestrator.screening_api.n_clusters == config.n_clusters
+    assert orchestrator.screening_api.min_cluster_size == config.min_cluster_size
+    assert orchestrator.screening_api.max_cluster_size == config.max_cluster_size
+    assert orchestrator.screening_api.min_assets == config.min_assets
+    assert orchestrator.screening_api.max_assets == config.max_assets
+    assert orchestrator.screening_api.pca_components == config.pca_components
+
+    assert orchestrator.cointegration_api.persistence_days == config.persistence_days
+
+    assert orchestrator.portfolio_api.top_n_spreads == config.top_n_spreads
+    assert orchestrator.portfolio_api.signal_api.zscore_window == config.zscore_window
+    assert (
+        orchestrator.portfolio_api.signal_api.entry_threshold == config.entry_threshold
+    )
+    assert orchestrator.portfolio_api.signal_api.exit_threshold == config.exit_threshold
+    assert (
+        orchestrator.portfolio_api.signal_api.threshold_method
+        == config.threshold_method
+    )
+    assert orchestrator.portfolio_api.signal_api.spread_method == config.spread_method
+
+    assert orchestrator.backtest_api.initial_capital == config.initial_capital
+
+    assert orchestrator.report_api.results_path == Path(config.results_path)

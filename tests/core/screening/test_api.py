@@ -43,7 +43,6 @@ def test_full_generates_subgroups_from_entire_universe() -> None:
 
     result = api.service(
         prices=_prices(),
-        factors=pd.DataFrame(),
     )
 
     assert result == [

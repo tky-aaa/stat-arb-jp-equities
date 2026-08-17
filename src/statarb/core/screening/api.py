@@ -1,8 +1,8 @@
-from dataclasses import dataclass
-
-import pandas as pd
+from dataclasses import dataclass, field
 
 from statarb.config.contract import Group, Prices, SubGroup
+from statarb.core.data.factors.base import FactorDataSource
+from statarb.core.data.factors.french import FrenchFactorSource
 from statarb.core.screening.clustering import Clusterizer
 from statarb.core.screening.ff3 import FF3Estimator
 from statarb.core.screening.groups import GroupGenerator
@@ -19,12 +19,15 @@ class ScreeningAPI:
     min_assets: int
     max_assets: int
     pca_components: int
+    factor_source: FactorDataSource = field(
+        default_factory=FrenchFactorSource,
+        repr=False,
+    )
 
     def service(
         self,
         prices: Prices,
         *,
-        factors: pd.DataFrame | None = None,
         universe: list[str] | None = None,
     ) -> list[SubGroup]:
         if self.screening_method == "full":
@@ -60,10 +63,12 @@ class ScreeningAPI:
             )
 
         elif self.screening_method == "ff3":
-            if factors is None:
-                raise ValueError("factors are required for ff3 screening.")
-
             returns = prices.training.pct_change().dropna()
+
+            factors = self.factor_source.get_factors(
+                start=prices.training.index.min().strftime("%Y-%m-%d"),
+                end=prices.training.index.max().strftime("%Y-%m-%d"),
+            )
 
             estimator = FF3Estimator()
             features = estimator.estimate_exposure(
