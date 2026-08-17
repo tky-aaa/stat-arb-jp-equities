@@ -45,7 +45,9 @@ class CointegrationAPI:
 
         analyses = []
 
-        for subgroup in subgroups:
+        total = len(subgroups)
+
+        for i, subgroup in enumerate(subgroups, start=1):
             selected_log_prices = log_prices[subgroup.tickers]
 
             result = johansen_tester.estimate_cointegration(
@@ -53,6 +55,7 @@ class CointegrationAPI:
             )
 
             if result.rank <= 0:
+                self._print_progress(i, total)
                 continue
 
             for beta_index in range(result.rank):
@@ -71,7 +74,7 @@ class CointegrationAPI:
 
                 mean_reversion = mean_reversion_evaluator.evaluate(
                     spread,
-                    persistence_window=(self.persistence_days),
+                    persistence_window=self.persistence_days,
                 )
 
                 distribution = distribution_evaluator.evaluate(
@@ -95,4 +98,28 @@ class CointegrationAPI:
                     )
                 )
 
+            self._print_progress(i, total)
+
+        print()
+
         return analyses
+
+    @staticmethod
+    def _print_progress(
+        current: int,
+        total: int,
+        width: int = 30,
+    ) -> None:
+        if total == 0:
+            return
+
+        ratio = current / total
+        filled = int(width * ratio)
+
+        bar = "█" * filled + "░" * (width - filled)
+
+        print(
+            f"\r[3/6] CointegrationAPI: [{bar}] {ratio:6.2%} ({current}/{total})",
+            end="",
+            flush=True,
+        )
