@@ -129,3 +129,39 @@ def test_allocate_rejects_zero_volatility() -> None:
         match="Spread volatility must be positive and finite",
     ):
         PortfolioAllocator().allocate([analysis])
+
+
+def test_allocate_handles_five_equal_weights_at_max_weight() -> None:
+    analyses = [
+        make_analysis([1.0, 1.0, 1.0, 1.0, 1.1]),
+        make_analysis([1.0, 1.0, 1.0, 1.0, 1.1]),
+        make_analysis([1.0, 1.0, 1.0, 1.0, 1.1]),
+        make_analysis([1.0, 1.0, 1.0, 1.0, 1.1]),
+        make_analysis([1.0, 1.0, 1.0, 1.0, 1.1]),
+    ]
+
+    weights = PortfolioAllocator().allocate(
+        analyses,
+        max_weight=0.2,
+    )
+
+    assert all(weight <= 0.2 for weight in weights)
+    assert sum(weights) == pytest.approx(1.0)
+
+
+def test_allocate_handles_realistic_capped_weights() -> None:
+    analyses = [
+        make_analysis([1.0, 1.0, 1.0, 1.0, 1.1]),
+        make_analysis([1.0, 1.0, 1.0, 1.0, 1.5]),
+        make_analysis([1.0, 1.0, 1.0, 1.0, 2.0]),
+        make_analysis([1.0, 1.0, 1.0, 1.0, 1.4]),
+        make_analysis([1.0, 1.0, 1.0, 1.0, 1.8]),
+    ]
+
+    weights = PortfolioAllocator().allocate(
+        analyses,
+        max_weight=0.2,
+    )
+
+    assert all(weight <= 0.2 + 1e-12 for weight in weights)
+    assert sum(weights) == pytest.approx(1.0)

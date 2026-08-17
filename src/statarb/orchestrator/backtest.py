@@ -118,9 +118,7 @@ class BacktestOrchestrator:
             subgroups,
         )
 
-        print(
-            f"[3/6] CointegrationAPI: done ({len(analyses)} analyses)",
-        )
+        print(f"[3/6] CointegrationAPI: done ({len(analyses)} analyses)")
 
         print("[4/6] PortfolioAPI: generating portfolio...")
 
@@ -129,9 +127,7 @@ class BacktestOrchestrator:
             analyses,
         )
 
-        print(
-            f"[4/6] PortfolioAPI: done ({len(decision.signals)} signals)",
-        )
+        print(f"[4/6] PortfolioAPI: done ({len(decision.signals)} signals)")
 
         print("[5/6] BacktestAPI: calculating returns...")
 

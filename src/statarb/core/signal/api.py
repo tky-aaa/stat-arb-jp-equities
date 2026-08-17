@@ -1,3 +1,4 @@
+import time
 from dataclasses import dataclass
 
 import numpy as np
@@ -45,7 +46,8 @@ class SignalAPI:
 
         signals = []
 
-        for analysis in analyses:
+        for i, analysis in enumerate(analyses, start=1):
+            start = time.perf_counter()
             training_spread, test_spread = self._create_spreads(
                 prices=prices,
                 analysis=analysis,
@@ -82,6 +84,10 @@ class SignalAPI:
                     zscore=test_zscore,
                     position=position,
                 )
+            )
+            print(
+                f"[PortfolioAPI] signal {i}/{len(analyses)}: "
+                f"{time.perf_counter() - start:.2f}s",
             )
 
         return signals

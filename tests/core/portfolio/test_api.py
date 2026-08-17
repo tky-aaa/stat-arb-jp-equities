@@ -121,7 +121,9 @@ def test_portfolio_api_returns_portfolio_decision() -> None:
         [
             make_signal([1.0, 1.1, 1.2]),
             make_signal([1.0, 1.2, 1.4]),
+            make_signal([1.0, 1.3, 1.6]),
         ],
+        max_weight=1.0,
     )
 
     decision = api.service(
@@ -156,6 +158,7 @@ def test_portfolio_api_selects_top_n_spreads() -> None:
             make_signal([1.0, 1.2, 1.4]),
             make_signal([1.0, 1.3, 1.6]),
         ],
+        max_weight=1.0,
     )
 
     decision = api.service(
@@ -184,10 +187,11 @@ def test_portfolio_api_respects_max_weight() -> None:
 
     api = make_api(
         [
-            make_signal([1.0, 1.01, 1.02]),
-            make_signal([1.0, 2.0, 3.0]),
+            make_signal([1.0, 1.1, 1.2]),
+            make_signal([1.0, 1.2, 1.4]),
         ],
-        max_weight=0.6,
+        max_weight=1.0,
+        max_leverage=0.5,
     )
     decision = api.service(
         prices=Prices(
@@ -219,6 +223,7 @@ def test_portfolio_api_respects_max_leverage() -> None:
             make_signal([1.0, 1.1, 1.2]),
             make_signal([1.0, 1.2, 1.4]),
         ],
+        max_weight=1.0,
         max_leverage=0.5,
     )
 

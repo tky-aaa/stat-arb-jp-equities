@@ -13,7 +13,7 @@ class BacktestConfig:
     screening_method: str = "full"  # ("full", "pca", "ff3")
     n_clusters: int = 10
     min_cluster_size: int = 3
-    max_cluster_size: int = 30
+    max_cluster_size: int = 20
     min_assets: int = 2
     max_assets: int = 3
     pca_components: int = 5

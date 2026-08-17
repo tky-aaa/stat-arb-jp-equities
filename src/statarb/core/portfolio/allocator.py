@@ -39,10 +39,15 @@ class PortfolioAllocator:
 
         weights = inverse_volatility / inverse_volatility.sum()
 
+        print("[PortfolioAllocator] before cap:", weights)
+        print("[PortfolioAllocator] max_weight:", max_weight)
+
         weights = self._cap_weights(
             weights,
             max_weight=max_weight,
         )
+
+        print("[PortfolioAllocator] after cap:", weights)
 
         return weights.tolist()
 
@@ -53,31 +58,68 @@ class PortfolioAllocator:
         max_weight: float,
     ) -> np.ndarray:
 
-        weights = weights.copy()
+        weights = np.asarray(weights, dtype=float).copy()
 
         if max_weight >= 1:
             return weights
 
+        if max_weight * len(weights) < 1.0 - 1e-12:
+            raise ValueError("max_weight is too small to allocate the full portfolio.")
+
+        # Iteratively fix weights that exceed the cap.
+        # Each iteration permanently fixes at least one weight,
+        # so the algorithm terminates in at most len(weights) iterations.
+        fixed = np.zeros(len(weights), dtype=bool)
+        result = np.zeros(len(weights), dtype=float)
+
+        remaining = 1.0
+
         while True:
-            over = weights > max_weight
+            active = ~fixed
 
-            if not over.any():
+            if not active.any():
                 break
 
-            excess = float((weights[over] - max_weight).sum())
+            active_weights = weights[active]
+            total = active_weights.sum()
 
-            weights[over] = max_weight
-
-            under = ~over
-
-            if not under.any():
-                break
-
-            under_total = weights[under].sum()
-
-            if under_total <= 0:
+            if total <= 0:
                 raise ValueError("Cannot redistribute excess weight.")
 
-            weights[under] += excess * weights[under] / under_total
+            allocation = active_weights / total * remaining
 
-        return weights
+            if np.all(allocation <= max_weight + 1e-12):
+                result[active] = allocation
+                break
+
+            active_indices = np.flatnonzero(active)
+            over = allocation > max_weight
+
+            result[active_indices[over]] = max_weight
+            fixed[active_indices[over]] = True
+
+            remaining -= float(max_weight * over.sum())
+
+        # Remove floating-point residue while preserving the cap.
+        result = np.minimum(result, max_weight)
+
+        residual = 1.0 - result.sum()
+
+        if abs(residual) > 1e-12:
+            available = result < max_weight - 1e-12
+
+            if not available.any():
+                raise ValueError("Cannot normalize capped weights.")
+
+            available_indices = np.flatnonzero(available)
+
+            for index in available_indices:
+                capacity = max_weight - result[index]
+                addition = min(capacity, residual)
+                result[index] += addition
+                residual -= addition
+
+                if residual <= 1e-12:
+                    break
+
+        return result
