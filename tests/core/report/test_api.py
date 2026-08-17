@@ -4,14 +4,24 @@ import pandas as pd
 import pytest
 
 from statarb.config.config import BacktestConfig
+from statarb.config.contract import (
+    BacktestResult,
+    SubGroup,
+)
 from statarb.core.report.api import ReportAPI
 
 
 def test_service_saves_outputs(tmp_path: Path) -> None:
     outputs = {
-        "screening": ["A", "B"],
+        "screening": [
+            SubGroup(tickers=["A", "B"]),
+        ],
         "cointegration": {"ticker": "A"},
-        "backtest": pd.Series([1.0, 2.0]),
+        "backtest": BacktestResult(
+            pnl=pd.Series([0.0, 0.1]),
+            cumulative_pnl=pd.Series([0.0, 0.1]),
+            equity=pd.Series([1.0, 1.1]),
+        ),
     }
 
     experiment_path = ReportAPI(
@@ -28,8 +38,14 @@ def test_service_saves_outputs(tmp_path: Path) -> None:
 
 def test_service_preserves_outputs(tmp_path: Path) -> None:
     outputs = {
-        "screening": ["A", "B"],
-        "backtest": pd.Series([1.0, 2.0]),
+        "screening": [
+            SubGroup(tickers=["A", "B"]),
+        ],
+        "backtest": BacktestResult(
+            pnl=pd.Series([0.0, 0.1]),
+            cumulative_pnl=pd.Series([0.0, 0.1]),
+            equity=pd.Series([1.0, 1.1]),
+        ),
     }
 
     api = ReportAPI(
@@ -45,10 +61,20 @@ def test_service_preserves_outputs(tmp_path: Path) -> None:
         experiment_path / "backtest.pkl",
     )
 
-    assert screening == ["A", "B"]
+    assert screening == [
+        SubGroup(tickers=["A", "B"]),
+    ]
     pd.testing.assert_series_equal(
-        backtest,
-        outputs["backtest"],
+        backtest.pnl,
+        outputs["backtest"].pnl,
+    )
+    pd.testing.assert_series_equal(
+        backtest.cumulative_pnl,
+        outputs["backtest"].cumulative_pnl,
+    )
+    pd.testing.assert_series_equal(
+        backtest.equity,
+        outputs["backtest"].equity,
     )
 
 

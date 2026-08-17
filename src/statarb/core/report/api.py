@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 from pathlib import Path
 
+from statarb.core.report.export import ReportExporter
 from statarb.core.report.metrics import BacktestMetricsCalculator
 from statarb.core.report.storage import ReportStorage
 
@@ -11,10 +12,12 @@ class ReportAPI:
         results_path: str = "results",
         storage: ReportStorage | None = None,
         metrics_calculator: BacktestMetricsCalculator | None = None,
+        exporter: ReportExporter | None = None,
     ):
         self.results_path = Path(results_path)
         self.storage = storage or ReportStorage()
         self.metrics_calculator = metrics_calculator or BacktestMetricsCalculator()
+        self.exporter = exporter or ReportExporter()
 
     def create_experiment_path(self) -> Path:
         experiment_id = datetime.now(UTC).strftime(
@@ -66,5 +69,10 @@ class ReportAPI:
                 output,
                 experiment_path / f"{name}.pkl",
             )
+
+        self.exporter.export(
+            experiment_path,
+            outputs,
+        )
 
         return experiment_path

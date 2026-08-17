@@ -11,9 +11,9 @@ class BacktestConfig:
     test_end: str = "2026-07-31"
 
     screening_method: str = "full"  # ("full", "pca", "ff3")
-    n_clusters: int = 15
-    min_cluster_size: int = 5
-    max_cluster_size: int = 50
+    n_clusters: int = 10
+    min_cluster_size: int = 3
+    max_cluster_size: int = 30
     min_assets: int = 2
     max_assets: int = 3
     pca_components: int = 5
@@ -26,7 +26,7 @@ class BacktestConfig:
     threshold_method: str = "gaussian"  # ("fixed", "gaussian", "empirical")
     spread_method: str = "kalman"  # ("static", "kalman")
 
-    top_n_spreads: int = 10
+    top_n_spreads: int = 5
 
     results_path: str = "results"
     initial_capital: float = 1.0
