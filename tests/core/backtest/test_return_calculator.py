@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 
 from statarb.config.contract import (
@@ -12,14 +11,18 @@ from statarb.core.backtest.return_calculator import ReturnCalculator
 
 def make_analysis() -> CointegrationAnalysis:
     return CointegrationAnalysis(
-        tickers=["AAA", "BBB"],
         rank=1,
         beta_index=0,
-        beta=np.array([1.0, -1.0]),
         spread=Spread(
             tickers=["AAA", "BBB"],
-            beta=np.array([1.0, -1.0]),
-            beta_index=0,
+            beta=pd.DataFrame(
+                [[1.0, -1.0]],
+                columns=["AAA", "BBB"],
+            ),
+            intercept=pd.Series(
+                [0.0],
+                name="intercept",
+            ),
             values=pd.Series(dtype=float),
         ),
         evaluation=SpreadEvaluation(

@@ -35,8 +35,8 @@ class LiveExecutionBuilder:
                 continue
 
             for ticker, beta in zip(
-                analysis.tickers,
-                analysis.beta,
+                analysis.spread.tickers,
+                analysis.spread.beta,
             ):
                 quantity = max(
                     1,

@@ -61,7 +61,7 @@ def test_signal_api_generates_kalman_signal() -> None:
                 -0.3,
             ]
         ),
-        beta_index=0,
+        intercept=pd.Series(dtype=float),
         values=pd.Series(
             dtype=float,
         ),
@@ -83,16 +83,8 @@ def test_signal_api_generates_kalman_signal() -> None:
     )
 
     analysis = CointegrationAnalysis(
-        tickers=["Y", "X1", "X2"],
         rank=1,
         beta_index=0,
-        beta=np.array(
-            [
-                1.0,
-                0.5,
-                -0.3,
-            ]
-        ),
         spread=spread,
         evaluation=evaluation,
     )
@@ -192,7 +184,7 @@ def test_signal_api_generates_fixed_signal() -> None:
                 -0.3,
             ]
         ),
-        beta_index=0,
+        intercept=pd.Series(dtype=float),
         values=pd.Series(
             dtype=float,
         ),
@@ -214,16 +206,8 @@ def test_signal_api_generates_fixed_signal() -> None:
     )
 
     analysis = CointegrationAnalysis(
-        tickers=["Y", "X1", "X2"],
         rank=1,
         beta_index=0,
-        beta=np.array(
-            [
-                1.0,
-                0.5,
-                -0.3,
-            ]
-        ),
         spread=spread,
         evaluation=evaluation,
     )
@@ -291,7 +275,7 @@ def test_signal_api_rejects_unknown_spread_method() -> None:
     spread = Spread(
         tickers=["Y", "X1"],
         beta=np.array([1.0, -1.0]),
-        beta_index=0,
+        intercept=pd.Series(dtype=float),
         values=pd.Series(dtype=float),
     )
 
@@ -311,10 +295,8 @@ def test_signal_api_rejects_unknown_spread_method() -> None:
     )
 
     analysis = CointegrationAnalysis(
-        tickers=["Y", "X1"],
         rank=1,
         beta_index=0,
-        beta=np.array([1.0, -1.0]),
         spread=spread,
         evaluation=evaluation,
     )
@@ -389,7 +371,7 @@ def test_signal_api_uses_gaussian_threshold() -> None:
                 -0.3,
             ]
         ),
-        beta_index=0,
+        intercept=pd.Series(dtype=float),
         values=pd.Series(
             dtype=float,
         ),
@@ -411,16 +393,8 @@ def test_signal_api_uses_gaussian_threshold() -> None:
     )
 
     analysis = CointegrationAnalysis(
-        tickers=["Y", "X1", "X2"],
         rank=1,
         beta_index=0,
-        beta=np.array(
-            [
-                1.0,
-                0.5,
-                -0.3,
-            ]
-        ),
         spread=spread,
         evaluation=evaluation,
     )

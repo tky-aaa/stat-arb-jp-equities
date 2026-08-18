@@ -153,10 +153,10 @@ class ReportExporter:
                 rows.append(
                     {
                         "timestamp": timestamp,
-                        "tickers": "_".join(analysis.tickers),
+                        "tickers": "_".join(analysis.spread.tickers),
                         "rank": analysis.rank,
                         "beta_index": analysis.beta_index,
-                        "beta": str(analysis.beta.tolist()),
+                        "beta": str(analysis.spread.beta.iloc[0].to_numpy().tolist()),
                         "adf_stat": evaluation.adf_stat,
                         "adf_pvalue": evaluation.adf_pvalue,
                         "kpss_stat": evaluation.kpss_stat,
@@ -208,7 +208,7 @@ class ReportExporter:
                 rows.append(
                     {
                         "timestamp": timestamp,
-                        "tickers": "_".join(analysis.tickers),
+                        "tickers": "_".join(analysis.spread.tickers),
                         "weight": weight,
                         "spread": signal.spread.loc[timestamp],
                         "zscore": signal.zscore.loc[timestamp],

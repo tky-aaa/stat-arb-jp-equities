@@ -16,15 +16,24 @@ from statarb.core.report.api import ReportAPI
 
 def test_service_saves_outputs(tmp_path: Path) -> None:
     analysis = CointegrationAnalysis(
-        tickers=["A", "B"],
         rank=1,
         beta_index=0,
-        beta=pd.Series([1.0, -1.0]).to_numpy(),
         spread=Spread(
             tickers=["A", "B"],
-            beta=pd.Series([1.0, -1.0]).to_numpy(),
-            beta_index=0,
-            values=pd.Series([0.0, 0.1]),
+            beta=pd.DataFrame(
+                [[1.0, -1.0], [1.0, -1.0]],
+                index=pd.date_range("2026-01-01", periods=2),
+                columns=["A", "B"],
+            ),
+            intercept=pd.Series(
+                [0.0, 0.0],
+                index=pd.date_range("2026-01-01", periods=2),
+                name="intercept",
+            ),
+            values=pd.Series(
+                [0.0, 0.1],
+                index=pd.date_range("2026-01-01", periods=2),
+            ),
         ),
         evaluation=SpreadEvaluation(
             adf_stat=-2.0,

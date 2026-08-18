@@ -1,16 +1,17 @@
 import pandas as pd
 
-from statarb.config.contract import KalmanSpread
+from statarb.config.contract import Spread
 
 
-def test_kalman_spread_contains_filtered_outputs() -> None:
+def test_spread_contains_filtered_outputs() -> None:
+
     index = pd.date_range(
         "2025-01-01",
         periods=3,
         freq="D",
     )
 
-    betas = pd.DataFrame(
+    beta = pd.DataFrame(
         {
             "beta_X1": [0.5, 0.51, 0.52],
             "beta_X2": [-0.3, -0.31, -0.32],
@@ -30,30 +31,30 @@ def test_kalman_spread_contains_filtered_outputs() -> None:
         name="spread",
     )
 
-    kalman_spread = KalmanSpread(
+    spread = Spread(
         tickers=["Y", "X1", "X2"],
-        betas=betas,
+        beta=beta,
         intercept=intercept,
         values=values,
     )
 
-    assert kalman_spread.tickers == [
+    assert spread.tickers == [
         "Y",
         "X1",
         "X2",
     ]
 
     pd.testing.assert_frame_equal(
-        kalman_spread.betas,
-        betas,
+        spread.beta,
+        beta,
     )
 
     pd.testing.assert_series_equal(
-        kalman_spread.intercept,
+        spread.intercept,
         intercept,
     )
 
     pd.testing.assert_series_equal(
-        kalman_spread.values,
+        spread.values,
         values,
     )

@@ -107,8 +107,16 @@ def test_export_cointegration(tmp_path: Path) -> None:
 
     spread = Spread(
         tickers=["A", "B"],
-        beta=pd.Series([1.0, -0.5]).to_numpy(),
-        beta_index=0,
+        beta=pd.DataFrame(
+            [[1.0, -0.5], [1.0, -0.5]],
+            index=pd.date_range("2026-01-01", periods=2),
+            columns=["A", "B"],
+        ),
+        intercept=pd.Series(
+            [0.0, 0.0],
+            index=pd.date_range("2026-01-01", periods=2),
+            name="intercept",
+        ),
         values=pd.Series(
             [0.1, 0.2],
             index=pd.date_range("2026-01-01", periods=2),
@@ -131,10 +139,8 @@ def test_export_cointegration(tmp_path: Path) -> None:
     )
 
     analysis = CointegrationAnalysis(
-        tickers=["A", "B"],
         rank=1,
         beta_index=0,
-        beta=pd.Series([1.0, -0.5]).to_numpy(),
         spread=spread,
         evaluation=evaluation,
     )
@@ -180,8 +186,16 @@ def test_export_portfolio(tmp_path: Path) -> None:
 
     spread = Spread(
         tickers=["A", "B"],
-        beta=pd.Series([1.0, -0.5]).to_numpy(),
-        beta_index=0,
+        beta=pd.DataFrame(
+            [[1.0, -0.5], [1.0, -0.5]],
+            index=pd.date_range("2026-01-01", periods=2),
+            columns=["A", "B"],
+        ),
+        intercept=pd.Series(
+            [0.0, 0.0],
+            index=pd.date_range("2026-01-01", periods=2),
+            name="intercept",
+        ),
         values=pd.Series(
             [0.1, 0.2],
             index=pd.date_range("2026-01-01", periods=2),
@@ -204,10 +218,8 @@ def test_export_portfolio(tmp_path: Path) -> None:
     )
 
     analysis = CointegrationAnalysis(
-        tickers=["A", "B"],
         rank=1,
         beta_index=0,
-        beta=pd.Series([1.0, -0.5]).to_numpy(),
         spread=spread,
         evaluation=evaluation,
     )

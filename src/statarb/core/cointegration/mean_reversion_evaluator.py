@@ -179,25 +179,6 @@ class MeanReversionEvaluator:
             max_lag,
         )
 
-        # Persistence is intentionally disabled in the current screening
-        # pipeline because its rolling ADF + KPSS calculation is too expensive
-        # at the current screening scale.
-        #
-        # Benchmark: TOPIX50, 20,825 subgroups, 1,995 cointegration analyses.
-        #
-        # Persistence enabled:
-        #   elapsed = 746.6897 s (~12.45 min)
-        #
-        # Persistence disabled:
-        #   elapsed = 132.7751 s (~2.21 min)
-        #
-        # Result:
-        #   speedup = 5.62x
-        #   time reduction = 613.9146 s (~10.23 min)
-        #
-        # The rolling persistence implementation is retained below in
-        # commented form so that it can be reconsidered in future research,
-        # but it is not executed in the current screening pipeline.
         persistence = self._rolling_persistence(
             values,
             persistence_window,

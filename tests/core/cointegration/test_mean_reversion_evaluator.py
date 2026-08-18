@@ -17,11 +17,20 @@ def test_evaluate_returns_mean_reversion_metrics() -> None:
         x = 0.7 * x + rng.normal(0.0, 1.0)
         values.append(x)
 
+    values = pd.Series(values, name="spread")
     spread = Spread(
         tickers=["AAA", "BBB"],
-        beta=np.array([1.0, -1.0]),
-        beta_index=0,
-        values=pd.Series(values, name="spread"),
+        beta=pd.DataFrame(
+            [[1.0, -1.0]] * len(values),
+            index=values.index,
+            columns=["AAA", "BBB"],
+        ),
+        intercept=pd.Series(
+            0.0,
+            index=values.index,
+            name="intercept",
+        ),
+        values=values,
     )
 
     evaluator = MeanReversionEvaluator()

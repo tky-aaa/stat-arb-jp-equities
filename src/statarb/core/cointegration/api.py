@@ -65,7 +65,6 @@ class CointegrationAPI:
                     prices=selected_log_prices,
                     tickers=result.tickers,
                     beta=beta,
-                    beta_index=beta_index,
                 )
 
                 stationarity = stationarity_evaluator.evaluate(
@@ -89,10 +88,8 @@ class CointegrationAPI:
 
                 analyses.append(
                     CointegrationAnalysis(
-                        tickers=result.tickers,
                         rank=result.rank,
                         beta_index=beta_index,
-                        beta=beta,
                         spread=spread,
                         evaluation=evaluation,
                     )

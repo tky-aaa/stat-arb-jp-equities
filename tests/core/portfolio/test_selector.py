@@ -35,16 +35,20 @@ def make_analysis(
 
     spread = Spread(
         tickers=["A", "B"],
-        beta=np.array([1.0, -1.0]),
-        beta_index=0,
+        beta=pd.DataFrame(
+            [[1.0, -1.0]],
+            columns=["A", "B"],
+        ),
+        intercept=pd.Series(
+            [0.0],
+            name="intercept",
+        ),
         values=pd.Series(dtype=float),
     )
 
     return CointegrationAnalysis(
-        tickers=["A", "B"],
         rank=1,
         beta_index=0,
-        beta=np.array([1.0, -1.0]),
         spread=spread,
         evaluation=evaluation,
     )

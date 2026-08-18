@@ -20,10 +20,16 @@ def make_analysis() -> CointegrationAnalysis:
 
     spread = Spread(
         tickers=["AAA", "BBB"],
-        beta=pd.Series(
-            [1.0, -1.0],
-        ).to_numpy(),
-        beta_index=0,
+        beta=pd.DataFrame(
+            [[1.0, -1.0]] * len(index),
+            index=index,
+            columns=["AAA", "BBB"],
+        ),
+        intercept=pd.Series(
+            0.0,
+            index=index,
+            name="intercept",
+        ),
         values=pd.Series(
             [10.0, 11.0, 9.0, 10.0],
             index=index,
@@ -46,12 +52,8 @@ def make_analysis() -> CointegrationAnalysis:
     )
 
     return CointegrationAnalysis(
-        tickers=["AAA", "BBB"],
         rank=1,
         beta_index=0,
-        beta=pd.Series(
-            [1.0, -1.0],
-        ).to_numpy(),
         spread=spread,
         evaluation=evaluation,
     )

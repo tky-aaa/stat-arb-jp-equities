@@ -295,9 +295,9 @@ def test_filter_supports_multiple_explanatory_assets(
     assert final_covariance.shape == (4, 4)
 
     assert list(beta.columns) == [
-        "beta_X1",
-        "beta_X2",
-        "beta_X3",
+        "X1",
+        "X2",
+        "X3",
     ]
 
     assert np.isfinite(spread).all()

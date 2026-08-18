@@ -240,7 +240,7 @@ class KalmanFilter:
 
             spreads.append(spread)
 
-        beta_columns = [f"beta_{ticker}" for ticker in X.columns]
+        beta_columns = list(X.columns)
 
         beta = pd.DataFrame(
             betas,

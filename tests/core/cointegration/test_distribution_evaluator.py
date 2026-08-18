@@ -15,8 +15,16 @@ def test_evaluate_returns_distribution_statistics() -> None:
 
     spread = Spread(
         tickers=["AAA", "BBB"],
-        beta=np.array([1.0, -1.0]),
-        beta_index=0,
+        beta=pd.DataFrame(
+            [[1.0, -1.0]] * len(values),
+            index=values.index,
+            columns=["AAA", "BBB"],
+        ),
+        intercept=pd.Series(
+            0.0,
+            index=values.index,
+            name="intercept",
+        ),
         values=values,
     )
 
@@ -43,8 +51,16 @@ def test_evaluate_rejects_too_few_observations() -> None:
 
     spread = Spread(
         tickers=["AAA", "BBB"],
-        beta=np.array([1.0, -1.0]),
-        beta_index=0,
+        beta=pd.DataFrame(
+            [[1.0, -1.0]] * len(values),
+            index=values.index,
+            columns=["AAA", "BBB"],
+        ),
+        intercept=pd.Series(
+            0.0,
+            index=values.index,
+            name="intercept",
+        ),
         values=values,
     )
 

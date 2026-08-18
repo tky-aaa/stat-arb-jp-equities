@@ -54,7 +54,7 @@ def test_service_generates_cointegration_analyses() -> None:
     if analyses:
         analysis = analyses[0]
 
-        assert analysis.tickers == ["AAA", "BBB"]
+        assert analysis.spread.tickers == ["AAA", "BBB"]
         assert analysis.rank >= 1
         assert analysis.beta_index >= 0
         assert analysis.spread.tickers == ["AAA", "BBB"]

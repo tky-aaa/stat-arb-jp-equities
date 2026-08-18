@@ -1,6 +1,5 @@
 from unittest.mock import Mock
 
-import numpy as np
 import pandas as pd
 
 from statarb.config.contract import (
@@ -58,21 +57,29 @@ def make_analysis(
         portmanteau=portmanteau,
     )
 
+    spread_values = pd.Series(
+        spread_values,
+        dtype=float,
+    )
+
     spread = Spread(
         tickers=["A", "B"],
-        beta=np.array([1.0, -1.0]),
-        beta_index=0,
-        values=pd.Series(
-            spread_values,
-            dtype=float,
+        beta=pd.DataFrame(
+            [[1.0, -1.0]] * len(spread_values),
+            index=spread_values.index,
+            columns=["A", "B"],
         ),
+        intercept=pd.Series(
+            0.0,
+            index=spread_values.index,
+            name="intercept",
+        ),
+        values=spread_values,
     )
 
     return CointegrationAnalysis(
-        tickers=["A", "B"],
         rank=1,
         beta_index=0,
-        beta=np.array([1.0, -1.0]),
         spread=spread,
         evaluation=evaluation,
     )

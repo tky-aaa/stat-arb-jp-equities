@@ -38,15 +38,7 @@ class JohansenResult:
 @dataclass(frozen=True)
 class Spread:
     tickers: list[str]
-    beta: np.ndarray
-    beta_index: int
-    values: pd.Series
-
-
-@dataclass(frozen=True)
-class KalmanSpread:
-    tickers: list[str]
-    betas: pd.DataFrame
+    beta: pd.DataFrame
     intercept: pd.Series
     values: pd.Series
 
@@ -76,10 +68,8 @@ class SpreadEvaluation:
 
 @dataclass(frozen=True)
 class CointegrationAnalysis:
-    tickers: list[str]
     rank: int
     beta_index: int
-    beta: np.ndarray
     spread: Spread
     evaluation: SpreadEvaluation
 

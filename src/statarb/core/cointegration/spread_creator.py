@@ -10,7 +10,6 @@ class SpreadCreator:
         prices: pd.DataFrame,
         tickers: list[str],
         beta: np.ndarray,
-        beta_index: int,
     ) -> Spread:
         beta = np.asarray(
             beta,
@@ -18,10 +17,29 @@ class SpreadCreator:
         ).flatten()
 
         if prices.shape[1] != len(beta):
-            raise ValueError("Price dimension and beta dimension mismatch.")
+            raise ValueError(
+                "Price dimension and beta dimension mismatch.",
+            )
 
         if len(tickers) != len(beta):
-            raise ValueError("Ticker dimension and beta dimension mismatch.")
+            raise ValueError(
+                "Ticker dimension and beta dimension mismatch.",
+            )
+
+        beta_frame = pd.DataFrame(
+            np.tile(
+                beta,
+                (len(prices), 1),
+            ),
+            index=prices.index,
+            columns=tickers,
+        )
+
+        intercept = pd.Series(
+            0.0,
+            index=prices.index,
+            name="intercept",
+        )
 
         values = prices.to_numpy() @ beta
 
@@ -33,7 +51,7 @@ class SpreadCreator:
 
         return Spread(
             tickers=list(tickers),
-            beta=beta.copy(),
-            beta_index=beta_index,
+            beta=beta_frame,
+            intercept=intercept,
             values=series,
         )

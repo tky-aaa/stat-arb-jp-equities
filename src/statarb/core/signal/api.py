@@ -1,4 +1,3 @@
-import time
 from dataclasses import dataclass
 
 import numpy as np
@@ -6,9 +5,9 @@ import pandas as pd
 
 from statarb.config.contract import (
     CointegrationAnalysis,
-    KalmanSpread,
     Prices,
     Signal,
+    Spread,
 )
 from statarb.core.cointegration.spread_creator import SpreadCreator
 from statarb.core.signal.generator import SignalGenerator
@@ -44,10 +43,9 @@ class SignalAPI:
         zscore_calculator = ZScoreCalculator()
         signal_generator = SignalGenerator()
 
-        signals = []
+        signals: list[Signal] = []
 
-        for i, analysis in enumerate(analyses, start=1):
-            start = time.perf_counter()
+        for analysis in analyses:
             training_spread, test_spread = self._create_spreads(
                 prices=prices,
                 analysis=analysis,
@@ -55,7 +53,7 @@ class SignalAPI:
 
             if self.threshold_method == "empirical":
                 training_zscore = zscore_calculator.calculate(
-                    training_spread,
+                    training_spread.values,
                     window=self.zscore_window,
                 )
 
@@ -103,7 +101,9 @@ class SignalAPI:
 
         if self.threshold_method == "empirical":
             if training_zscore is None:
-                raise ValueError("training_zscore is required for empirical threshold.")
+                raise ValueError(
+                    "training_zscore is required for empirical threshold.",
+                )
 
             return EmpiricalThresholdOptimizer(
                 min_threshold=self.min_threshold,
@@ -114,15 +114,20 @@ class SignalAPI:
                 training_zscore,
             )
 
-        raise ValueError(f"Unknown threshold_method: {self.threshold_method}")
+        raise ValueError(
+            f"Unknown threshold_method: {self.threshold_method}",
+        )
 
     def _create_spreads(
         self,
         *,
         prices: Prices,
-        analysis,
-    ) -> tuple[pd.Series, object]:
+        analysis: CointegrationAnalysis,
+    ) -> tuple[Spread, Spread]:
         tickers = analysis.spread.tickers
+
+        training_prices = prices.training[tickers]
+        test_prices = prices.test[tickers]
 
         if self.spread_method == "fixed":
             spread_creator = SpreadCreator()
@@ -132,30 +137,22 @@ class SignalAPI:
                 dtype=float,
             )
 
-            training_prices = prices.training[tickers]
-            test_prices = prices.test[tickers]
-
             training_spread = spread_creator.create(
                 prices=training_prices,
                 tickers=tickers,
                 beta=beta,
-                beta_index=analysis.spread.beta_index,
             )
 
             test_spread = spread_creator.create(
                 prices=test_prices,
                 tickers=tickers,
                 beta=beta,
-                beta_index=analysis.spread.beta_index,
             )
 
-            return training_spread.values, test_spread
+            return training_spread, test_spread
 
         if self.spread_method == "kalman":
             kalman_filter = KalmanFilter()
-
-            training_prices = prices.training[tickers]
-            test_prices = prices.test[tickers]
 
             (
                 initial_state,
@@ -168,9 +165,9 @@ class SignalAPI:
             )
 
             (
-                training_spread,
-                _,
-                _,
+                training_values,
+                training_betas,
+                training_intercept,
                 state,
                 covariance,
             ) = kalman_filter.filter(
@@ -182,7 +179,7 @@ class SignalAPI:
             )
 
             (
-                test_spread,
+                test_values,
                 test_betas,
                 test_intercept,
                 _,
@@ -195,13 +192,22 @@ class SignalAPI:
                 transition_covariance=transition_covariance,
             )
 
-            kalman_spread = KalmanSpread(
+            training_spread = Spread(
                 tickers=tickers,
-                betas=test_betas,
-                intercept=test_intercept,
-                values=test_spread,
+                beta=training_betas,
+                intercept=training_intercept,
+                values=training_values,
             )
 
-            return training_spread, kalman_spread
+            test_spread = Spread(
+                tickers=tickers,
+                beta=test_betas,
+                intercept=test_intercept,
+                values=test_values,
+            )
 
-        raise ValueError(f"Unknown spread_method: {self.spread_method}")
+            return training_spread, test_spread
+
+        raise ValueError(
+            f"Unknown spread_method: {self.spread_method}",
+        )

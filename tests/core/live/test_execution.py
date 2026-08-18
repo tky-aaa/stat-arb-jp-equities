@@ -1,20 +1,27 @@
+import numpy as np
 import pandas as pd
 
 from statarb.config.contract import (
     CointegrationAnalysis,
     PortfolioDecision,
     Signal,
+    Spread,
 )
 from statarb.core.live.execution import LiveExecutionBuilder
 
 
 def make_decision(position: int) -> PortfolioDecision:
-    analysis = CointegrationAnalysis(
+    spread = Spread(
         tickers=["A", "B"],
+        beta=np.array([1.0, -0.5]),
+        intercept=pd.Series(dtype=float),
+        values=pd.Series(dtype=float),
+    )
+
+    analysis = CointegrationAnalysis(
         rank=1,
         beta_index=0,
-        beta=pd.Series([1.0, -0.5]),
-        spread=None,
+        spread=spread,
         evaluation=None,
     )
 

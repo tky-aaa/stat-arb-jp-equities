@@ -14,11 +14,11 @@ class ReturnCalculator:
         signal: Signal,
     ) -> pd.Series:
 
-        asset_returns = prices[analysis.tickers].pct_change()
+        asset_returns = prices[analysis.spread.tickers].pct_change()
 
         beta = pd.Series(
-            analysis.beta,
-            index=analysis.tickers,
+            analysis.spread.beta.iloc[0].to_numpy(),
+            index=analysis.spread.tickers,
         )
 
         normalized_beta = beta / beta.abs().sum()
