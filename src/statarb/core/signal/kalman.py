@@ -240,10 +240,18 @@ class KalmanFilter:
 
             spreads.append(spread)
 
-        beta_columns = list(X.columns)
-
+        beta_columns = list(prices.columns)
+        beta_values = [
+            np.concatenate(
+                [
+                    np.array([1.0]),
+                    -np.asarray(beta),
+                ]
+            )
+            for beta in betas
+        ]
         beta = pd.DataFrame(
-            betas,
+            beta_values,
             index=prices.index,
             columns=beta_columns,
         )

@@ -12,12 +12,9 @@ def prices() -> pd.DataFrame:
         periods=100,
         freq="D",
     )
-
     x1 = np.linspace(100.0, 120.0, 100)
     x2 = 80.0 + 15.0 * np.sin(np.linspace(0.0, 2.0 * np.pi, 100))
-
     y = 2.0 + 0.5 * x1 - 0.3 * x2
-
     return pd.DataFrame(
         {
             "Y": y,
@@ -32,7 +29,6 @@ def test_initialize_returns_expected_dimensions(
     prices: pd.DataFrame,
 ) -> None:
     kalman = KalmanFilter()
-
     (
         state,
         covariance,
@@ -46,7 +42,6 @@ def test_initialize_returns_expected_dimensions(
     assert state.shape == (3,)
     assert covariance.shape == (3, 3)
     assert transition_covariance.shape == (3, 3)
-
     assert np.isfinite(state).all()
     assert np.isfinite(covariance).all()
     assert np.isfinite(observation_variance)
@@ -116,9 +111,14 @@ def test_filter_returns_one_step_ahead_spread(
     assert len(beta) == len(prices)
     assert len(intercept) == len(prices)
 
-    assert beta.shape == (len(prices), 2)
-    assert intercept.shape == (len(prices),)
+    assert beta.shape == (len(prices), 3)
+    assert list(beta.columns) == [
+        "Y",
+        "X1",
+        "X2",
+    ]
 
+    assert intercept.shape == (len(prices),)
     assert final_state.shape == (3,)
     assert final_covariance.shape == (3, 3)
 
@@ -160,12 +160,10 @@ def test_filter_preserves_index(
         spread.index,
         prices.index,
     )
-
     pd.testing.assert_index_equal(
         beta.index,
         prices.index,
     )
-
     pd.testing.assert_index_equal(
         intercept.index,
         prices.index,
@@ -226,7 +224,6 @@ def test_filter_current_observation_does_not_affect_previous_spreads(
     )
 
     modified_prices = prices.copy()
-
     modified_prices.iloc[50, 0] += 100.0
 
     (
@@ -254,7 +251,13 @@ def test_filter_supports_multiple_explanatory_assets(
 ) -> None:
     kalman = KalmanFilter()
 
-    x3 = 60.0 + 8.0 * np.cos(np.linspace(0.0, 2.0 * np.pi, len(prices)))
+    x3 = 60.0 + 8.0 * np.cos(
+        np.linspace(
+            0.0,
+            2.0 * np.pi,
+            len(prices),
+        )
+    )
 
     prices = prices.copy()
     prices["X3"] = x3
@@ -288,17 +291,18 @@ def test_filter_supports_multiple_explanatory_assets(
     )
 
     assert len(spread) == len(prices)
-    assert beta.shape == (len(prices), 3)
-    assert intercept.shape == (len(prices),)
 
-    assert final_state.shape == (4,)
-    assert final_covariance.shape == (4, 4)
-
+    assert beta.shape == (len(prices), 4)
     assert list(beta.columns) == [
+        "Y",
         "X1",
         "X2",
         "X3",
     ]
+
+    assert intercept.shape == (len(prices),)
+    assert final_state.shape == (4,)
+    assert final_covariance.shape == (4, 4)
 
     assert np.isfinite(spread).all()
     assert np.isfinite(beta.to_numpy()).all()
@@ -338,19 +342,23 @@ def test_filter_returns_spread_beta_and_intercept(
     assert isinstance(betas, pd.DataFrame)
     assert isinstance(intercept, pd.Series)
 
-    assert betas.shape == (len(prices), 2)
+    assert betas.shape == (len(prices), 3)
+    assert list(betas.columns) == [
+        "Y",
+        "X1",
+        "X2",
+    ]
+
     assert intercept.shape == (len(prices),)
 
     pd.testing.assert_index_equal(
         spread.index,
         prices.index,
     )
-
     pd.testing.assert_index_equal(
         betas.index,
         prices.index,
     )
-
     pd.testing.assert_index_equal(
         intercept.index,
         prices.index,

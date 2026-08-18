@@ -10,7 +10,7 @@ class BacktestConfig:
     test_start: str = "2026-01-01"
     test_end: str = "2026-07-31"
 
-    screening_method: str = "full"  # ("full", "pca", "ff3")
+    screening_method: str = "ff3"  # ("full", "pca", "ff3")
     n_clusters: int = 10
     min_cluster_size: int = 3
     max_cluster_size: int = 20
