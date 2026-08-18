@@ -54,6 +54,11 @@ def make_signal(
             positions,
             index=index,
         ),
+        beta=pd.DataFrame(
+            [[1.0, -0.5]] * len(positions),
+            index=index,
+            columns=["A", "B"],
+        ),
     )
 
 

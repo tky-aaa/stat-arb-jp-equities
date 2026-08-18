@@ -81,6 +81,7 @@ class SignalAPI:
                     spread=test_spread.values,
                     zscore=test_zscore,
                     position=position,
+                    beta=test_spread.beta,
                 )
             )
 

@@ -237,6 +237,11 @@ def test_export_portfolio(tmp_path: Path) -> None:
             [0.0, -1.0],
             index=pd.date_range("2026-01-01", periods=2),
         ),
+        beta=pd.DataFrame(
+            [[1.0, -0.5], [1.0, -0.5]],
+            index=pd.date_range("2026-01-01", periods=2),
+            columns=["A", "B"],
+        ),
     )
 
     portfolio = PortfolioDecision(

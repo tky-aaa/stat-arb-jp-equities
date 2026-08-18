@@ -36,6 +36,11 @@ def test_run_passes_contracts_through_pipeline() -> None:
             spread=pd.Series([1.0]),
             zscore=pd.Series([0.0]),
             position=pd.Series([0.0]),
+            beta=pd.DataFrame(
+                [[1.0, -0.5]],
+                index=pd.RangeIndex(1),
+                columns=["A", "B"],
+            ),
         ),
     ]
 

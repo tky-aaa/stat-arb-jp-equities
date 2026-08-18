@@ -29,6 +29,11 @@ def make_decision(position: int) -> PortfolioDecision:
         spread=pd.Series([0.0]),
         zscore=pd.Series([0.0]),
         position=pd.Series([position]),
+        beta=pd.DataFrame(
+            [[1.0, -0.5]],
+            index=pd.date_range("2025-01-01", periods=1),
+            columns=["A", "B"],
+        ),
     )
 
     return PortfolioDecision(

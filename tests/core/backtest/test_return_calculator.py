@@ -76,6 +76,16 @@ def make_signal() -> Signal:
             [0.0, 1.0, -1.0, 1.0],
             index=index,
         ),
+        beta=pd.DataFrame(
+            [
+                [1.0, -1.0],
+                [1.0, -1.0],
+                [0.5, -1.0],
+                [0.5, -1.0],
+            ],
+            index=index,
+            columns=["AAA", "BBB"],
+        ),
     )
 
 
@@ -89,9 +99,28 @@ def test_calculate_uses_normalized_beta_and_lagged_position() -> None:
     aaa_return = make_prices()["AAA"].pct_change()
     bbb_return = make_prices()["BBB"].pct_change()
 
-    spread_return = 0.5 * aaa_return - 0.5 * bbb_return
+    signal = make_signal()
 
-    expected = (make_signal().position.shift(1) * spread_return).fillna(0.0)
+    beta = signal.beta
+    normalized_beta = beta.div(
+        beta.abs().sum(axis=1),
+        axis=0,
+    )
+
+    spread_return = (
+        pd.DataFrame(
+            {
+                "AAA": aaa_return,
+                "BBB": bbb_return,
+            },
+        )
+        .mul(
+            normalized_beta,
+        )
+        .sum(axis=1)
+    )
+
+    expected = (signal.position.shift(1) * spread_return).fillna(0.0)
 
     expected.name = "pnl"
 
@@ -121,3 +150,52 @@ def test_calculate_preserves_pnl_name() -> None:
     )
 
     assert result.name == "pnl"
+
+
+def test_calculate_uses_time_varying_beta() -> None:
+    prices = make_prices()
+
+    signal = make_signal()
+
+    signal = Signal(
+        spread=signal.spread,
+        zscore=signal.zscore,
+        position=signal.position,
+        beta=pd.DataFrame(
+            [
+                [1.0, -1.0],
+                [0.5, -1.0],
+                [2.0, -1.0],
+                [1.0, -1.0],
+            ],
+            index=prices.index,
+            columns=["AAA", "BBB"],
+        ),
+    )
+
+    result = ReturnCalculator().calculate(
+        prices,
+        make_analysis(),
+        signal,
+    )
+
+    asset_returns = prices.pct_change()
+
+    beta = signal.beta
+    normalized_beta = beta.div(
+        beta.abs().sum(axis=1),
+        axis=0,
+    )
+
+    spread_return = asset_returns.mul(
+        normalized_beta,
+    ).sum(axis=1)
+
+    expected = (signal.position.shift(1) * spread_return).fillna(0.0)
+
+    expected.name = "pnl"
+
+    pd.testing.assert_series_equal(
+        result,
+        expected,
+    )

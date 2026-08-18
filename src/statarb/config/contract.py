@@ -79,6 +79,7 @@ class Signal:
     spread: pd.Series
     zscore: pd.Series
     position: pd.Series
+    beta: pd.DataFrame
 
 
 @dataclass(frozen=True)

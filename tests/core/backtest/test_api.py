@@ -81,6 +81,11 @@ def make_signal(
             position_values,
             index=index,
         ),
+        beta=pd.DataFrame(
+            [[1.0, -1.0]] * len(spread_values),
+            index=index,
+            columns=["AAA", "BBB"],
+        ),
     )
 
 

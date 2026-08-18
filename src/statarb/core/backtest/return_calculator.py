@@ -13,15 +13,15 @@ class ReturnCalculator:
         analysis: CointegrationAnalysis,
         signal: Signal,
     ) -> pd.Series:
+        tickers = analysis.spread.tickers
 
-        asset_returns = prices[analysis.spread.tickers].pct_change()
+        asset_returns = prices[tickers].pct_change()
 
-        beta = pd.Series(
-            analysis.spread.beta.iloc[0].to_numpy(),
-            index=analysis.spread.tickers,
+        beta = signal.beta[tickers]
+        normalized_beta = beta.div(
+            beta.abs().sum(axis=1),
+            axis=0,
         )
-
-        normalized_beta = beta / beta.abs().sum()
 
         spread_return = asset_returns.mul(
             normalized_beta,
@@ -32,7 +32,6 @@ class ReturnCalculator:
 
         strategy_return = position * spread_return
         strategy_return = strategy_return.fillna(0.0)
-
         strategy_return.name = "pnl"
 
         return strategy_return
