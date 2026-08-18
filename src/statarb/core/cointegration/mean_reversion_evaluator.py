@@ -198,7 +198,10 @@ class MeanReversionEvaluator:
         # The rolling persistence implementation is retained below in
         # commented form so that it can be reconsidered in future research,
         # but it is not executed in the current screening pipeline.
-        persistence = np.nan
+        persistence = self._rolling_persistence(
+            values,
+            persistence_window,
+        )
 
         return {
             "rho1": rho1,

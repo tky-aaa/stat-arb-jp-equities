@@ -14,6 +14,7 @@ def make_analysis(
     *,
     half_life: float,
     portmanteau: float,
+    persistence: float = 0.0,
     adf_pvalue: float = 0.01,
     kpss_pvalue: float = 0.10,
 ) -> CointegrationAnalysis:
@@ -25,7 +26,7 @@ def make_analysis(
         rho1=0.0,
         phi=0.0,
         half_life=half_life,
-        persistence=0.0,
+        persistence=persistence,
         mean=0.0,
         variance=1.0,
         std=1.0,
@@ -131,34 +132,29 @@ def test_select_filters_nonfinite_portmanteau() -> None:
     assert selected == [valid]
 
 
-def test_select_sorts_by_half_life_then_portmanteau() -> None:
-    half_life_2_low = make_analysis(
-        half_life=2.0,
-        portmanteau=1.0,
-    )
-    half_life_1 = make_analysis(
+def test_select_ranks_by_sum_of_three_metrics() -> None:
+    best = make_analysis(
         half_life=1.0,
-        portmanteau=1.0,
-    )
-    half_life_2_high = make_analysis(
-        half_life=2.0,
+        persistence=0.9,
         portmanteau=3.0,
+    )
+    middle = make_analysis(
+        half_life=2.0,
+        persistence=0.5,
+        portmanteau=2.0,
+    )
+    worst = make_analysis(
+        half_life=3.0,
+        persistence=0.1,
+        portmanteau=1.0,
     )
 
     selected = PortfolioSelector().select(
-        [
-            half_life_2_low,
-            half_life_1,
-            half_life_2_high,
-        ],
+        [worst, middle, best],
         top_n=3,
     )
 
-    assert selected == [
-        half_life_1,
-        half_life_2_high,
-        half_life_2_low,
-    ]
+    assert selected == [best, middle, worst]
 
 
 def test_select_limits_to_top_n() -> None:

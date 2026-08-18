@@ -166,10 +166,8 @@ def test_portfolio_api_selects_top_n_spreads() -> None:
         [third, first, second],
     )
 
-    assert decision.analyses == [
-        first,
-        second,
-    ]
+    assert decision.analyses[0] is first
+    assert decision.analyses[1] is second
     assert len(decision.weights) == 2
 
 

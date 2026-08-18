@@ -43,7 +43,8 @@ def test_evaluate_returns_mean_reversion_metrics() -> None:
     assert np.isfinite(result["phi"])
     assert np.isfinite(result["half_life"])
     assert np.isfinite(result["portmanteau"])
-    assert np.isnan(result["persistence"])
+    assert np.isfinite(result["persistence"])
+    assert 0.0 <= result["persistence"] <= 1.0
 
     assert 0 < result["phi"] < 1
     assert result["half_life"] > 0
