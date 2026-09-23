@@ -70,8 +70,11 @@ class SignalAPI:
                 window=self.zscore_window,
             )
 
+            available = ~prices.test[analysis.spread.tickers].isna().any(axis=1)
+
             position = signal_generator.generate(
                 test_zscore,
+                available=available,
                 entry_threshold=entry_threshold,
                 exit_threshold=self.exit_threshold,
             )

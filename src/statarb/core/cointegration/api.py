@@ -50,6 +50,10 @@ class CointegrationAPI:
         for i, subgroup in enumerate(subgroups, start=1):
             selected_log_prices = log_prices[subgroup.tickers]
 
+            if len(selected_log_prices.dropna()) < 30:
+                self._print_progress(i, total)
+                continue
+
             result = johansen_tester.estimate_cointegration(
                 log_prices=selected_log_prices,
             )

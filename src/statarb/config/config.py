@@ -5,12 +5,12 @@ from dataclasses import dataclass
 class BacktestConfig:
     universe: str = "topix50"
 
-    training_start: str = "2025-01-01"
-    training_end: str = "2025-12-31"
-    test_start: str = "2026-01-01"
-    test_end: str = "2026-07-31"
+    training_start: str = "2022-01-01"
+    training_end: str = "2023-12-31"
+    test_start: str = "2024-01-01"
+    test_end: str = "2025-12-31"
 
-    screening_method: str = "ff3"  # ("full", "pca", "ff3")
+    screening_method: str = "full"  # ("full", "pca", "ff3")
     n_clusters: int = 10
     min_cluster_size: int = 3
     max_cluster_size: int = 20
@@ -20,9 +20,9 @@ class BacktestConfig:
 
     persistence_days: int = 60
 
-    zscore_window: int = 60
+    zscore_window: int = 40  # to be validated
     entry_threshold: float = 2.0
-    exit_threshold: float = 0.25
+    exit_threshold: float = 0.00  # to be validated
     threshold_method: str = "gaussian"  # ("fixed", "gaussian", "empirical")
     spread_method: str = "kalman"  # ("static", "kalman")
 
@@ -36,10 +36,10 @@ class BacktestConfig:
 
 @dataclass(frozen=True)
 class LiveConfig:
-    universe: str = "topix100"
+    universe: str = "topix50"
 
-    training_start: str = "2025-06-01"
-    training_end: str = "2025-10-01"
+    training_start: str = "2024-01-01"
+    training_end: str = "2025-12-31"
 
     screening_method: str = "full"
     n_clusters: int = 20
@@ -54,10 +54,10 @@ class LiveConfig:
     zscore_window: int = 60
     entry_threshold: float = 2.0
     exit_threshold: float = 0.5
-    threshold_method: str = "fixed"
-    spread_method: str = "fixed"
+    threshold_method: str = "gaussian"
+    spread_method: str = "kalman"
 
-    top_n_spreads: int = 10
+    top_n_spreads: int = 5
 
     strategy_path: str = "data/live/strategy.pkl"
 

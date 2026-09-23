@@ -132,40 +132,30 @@ class KalmanFilter:
     ) -> tuple[pd.Series, pd.DataFrame, pd.Series, np.ndarray, np.ndarray]:
         """
         Apply Kalman filtering to price observations.
-
         Returns
         -------
         spread:
             One-step-ahead prediction errors.
-
         beta:
             Filtered time-varying hedge ratios.
-
         intercept:
             Filtered time-varying intercept.
         """
-
         if prices.shape[1] < 2:
             raise ValueError("At least two assets are required.")
 
-        prices = prices.dropna().astype(float)
+        prices = prices.astype(float)
 
         if prices.empty:
             raise ValueError("No valid observations.")
 
-        y = prices.iloc[:, 0]
-        X = prices.iloc[:, 1:]
-
-        n_assets = X.shape[1]
+        n_assets = prices.shape[1] - 1
         state_dimension = n_assets + 1
 
         if len(state) != state_dimension:
             raise ValueError("State dimension mismatch.")
 
-        if covariance.shape != (
-            state_dimension,
-            state_dimension,
-        ):
+        if covariance.shape != (state_dimension, state_dimension):
             raise ValueError("Covariance dimension mismatch.")
 
         if transition_covariance.shape != (
@@ -174,40 +164,40 @@ class KalmanFilter:
         ):
             raise ValueError("Transition covariance dimension mismatch.")
 
-        state = np.asarray(
-            state,
-            dtype=float,
-        ).copy()
-
-        covariance = np.asarray(
-            covariance,
-            dtype=float,
-        ).copy()
+        state = np.asarray(state, dtype=float).copy()
+        covariance = np.asarray(covariance, dtype=float).copy()
 
         betas = []
         intercepts = []
         spreads = []
 
-        for t in range(len(prices)):
-            observation = np.concatenate(
-                [
-                    np.array([1.0]),
-                    X.iloc[t].to_numpy(),
-                ]
-            )
+        for _, row in prices.iterrows():
+            observation_available = row.notna().all()
 
             # Prediction
             state_prior = state.copy()
-
             covariance_prior = covariance + transition_covariance
 
-            # One-step-ahead prediction error.
-            #
-            # y_t is not used to update the state
-            # until after the spread is calculated.
-            prediction = observation @ state_prior
+            if not observation_available:
+                # No complete observation is available.
+                # Do not update the state, but keep the predicted state
+                # and covariance for the next observation.
+                state = state_prior
+                covariance = covariance_prior
 
-            spread = y.iloc[t] - prediction
+                spreads.append(np.nan)
+                intercepts.append(state_prior[0])
+                betas.append(state_prior[1:].copy())
+                continue
+
+            y = float(row.iloc[0])
+            x = row.iloc[1:].to_numpy(dtype=float)
+
+            observation = np.concatenate([np.array([1.0]), x])
+
+            # One-step-ahead prediction error.
+            prediction = observation @ state_prior
+            spread = y - prediction
 
             prediction_variance = (
                 observation @ covariance_prior @ observation + observation_variance
@@ -219,37 +209,22 @@ class KalmanFilter:
             gain = covariance_prior @ observation / prediction_variance
 
             # Update
-            error = y.iloc[t] - prediction
-
-            state = state_prior + gain * error
-
+            state = state_prior + gain * spread
             covariance = (
-                covariance_prior
-                - np.outer(
-                    gain,
-                    observation,
-                )
-                @ covariance_prior
+                covariance_prior - np.outer(gain, observation) @ covariance_prior
             )
-
             covariance = (covariance + covariance.T) / 2
 
             intercepts.append(state[0])
-
             betas.append(state[1:].copy())
-
             spreads.append(spread)
 
         beta_columns = list(prices.columns)
+
         beta_values = [
-            np.concatenate(
-                [
-                    np.array([1.0]),
-                    -np.asarray(beta),
-                ]
-            )
-            for beta in betas
+            np.concatenate([np.array([1.0]), -np.asarray(beta)]) for beta in betas
         ]
+
         beta = pd.DataFrame(
             beta_values,
             index=prices.index,

@@ -35,6 +35,7 @@ def test_generate_enters_and_exits_both_positions(
 
     position = generator.generate(
         zscore,
+        available=pd.Series(True, index=zscore.index),
         entry_threshold=2.0,
         exit_threshold=0.5,
     )
@@ -80,6 +81,7 @@ def test_generate_enters_and_exits_short_position() -> None:
 
     position = generator.generate(
         zscore,
+        available=pd.Series(True, index=zscore.index),
         entry_threshold=2.0,
         exit_threshold=0.5,
     )
@@ -122,6 +124,7 @@ def test_generate_preserves_position_during_nan() -> None:
 
     position = generator.generate(
         zscore,
+        available=pd.Series(True, index=zscore.index),
         entry_threshold=2.0,
         exit_threshold=0.5,
     )
@@ -150,6 +153,7 @@ def test_generate_preserves_index_and_name(
 
     position = generator.generate(
         zscore,
+        available=pd.Series(True, index=zscore.index),
         entry_threshold=2.0,
         exit_threshold=0.5,
     )
@@ -173,6 +177,7 @@ def test_generate_rejects_invalid_thresholds(
     ):
         generator.generate(
             zscore,
+            available=pd.Series(True, index=zscore.index),
             entry_threshold=0.0,
             exit_threshold=0.5,
         )
@@ -183,6 +188,7 @@ def test_generate_rejects_invalid_thresholds(
     ):
         generator.generate(
             zscore,
+            available=pd.Series(True, index=zscore.index),
             entry_threshold=2.0,
             exit_threshold=-0.1,
         )
@@ -193,6 +199,43 @@ def test_generate_rejects_invalid_thresholds(
     ):
         generator.generate(
             zscore,
+            available=pd.Series(True, index=zscore.index),
             entry_threshold=2.0,
             exit_threshold=2.0,
         )
+
+
+def test_generate_closes_position_when_unavailable() -> None:
+    index = pd.date_range(
+        "2025-01-01",
+        periods=4,
+        freq="D",
+    )
+    zscore = pd.Series(
+        [2.5, 1.0, 1.0, 2.5],
+        index=index,
+        name="zscore",
+    )
+    available = pd.Series(
+        [True, False, True, True],
+        index=index,
+    )
+
+    generator = SignalGenerator()
+    position = generator.generate(
+        zscore,
+        available=available,
+        entry_threshold=2.0,
+        exit_threshold=0.5,
+    )
+
+    expected = pd.Series(
+        [-1, 0, 0, -1],
+        index=index,
+        name="position",
+    )
+
+    pd.testing.assert_series_equal(
+        position,
+        expected,
+    )

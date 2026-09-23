@@ -58,3 +58,29 @@ def test_service_generates_cointegration_analyses() -> None:
         assert analysis.rank >= 1
         assert analysis.beta_index >= 0
         assert analysis.spread.tickers == ["AAA", "BBB"]
+
+
+def test_service_skips_subgroup_with_too_few_common_observations() -> None:
+    dates = pd.date_range("2025-01-01", periods=40, freq="D")
+
+    prices = Prices(
+        training=pd.DataFrame(
+            {
+                "A": range(100, 140),
+                "B": range(200, 240),
+                "C": [float("nan")] * 15 + list(range(300, 325)),
+            },
+            index=dates,
+        ),
+        test=pd.DataFrame(),
+    )
+
+    subgroups = [
+        SubGroup(tickers=["A", "B", "C"]),
+    ]
+
+    api = CointegrationAPI(persistence_days=10)
+
+    analyses = api.service(prices, subgroups)
+
+    assert analyses == []

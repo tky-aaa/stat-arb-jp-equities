@@ -170,6 +170,92 @@ def test_filter_preserves_index(
     )
 
 
+def test_filter_handles_missing_observation(
+    prices: pd.DataFrame,
+) -> None:
+    kalman = KalmanFilter()
+
+    (
+        state,
+        covariance,
+        observation_variance,
+        transition_covariance,
+    ) = kalman.initialize(
+        prices,
+        alpha=1e-5,
+    )
+
+    missing_index = prices.index[50]
+    prices_with_nan = prices.copy()
+    prices_with_nan.loc[missing_index, "X1"] = np.nan
+
+    (
+        spread,
+        beta,
+        intercept,
+        _,
+        _,
+    ) = kalman.filter(
+        prices_with_nan,
+        state=state,
+        covariance=covariance,
+        observation_variance=observation_variance,
+        transition_covariance=transition_covariance,
+    )
+
+    assert len(spread) == len(prices)
+    assert len(beta) == len(prices)
+    assert len(intercept) == len(prices)
+
+    pd.testing.assert_index_equal(
+        spread.index,
+        prices.index,
+    )
+
+    assert pd.isna(spread.loc[missing_index])
+    assert np.isfinite(beta.loc[missing_index].to_numpy()).all()
+    assert np.isfinite(intercept.loc[missing_index])
+
+
+def test_filter_resumes_after_missing_observation(
+    prices: pd.DataFrame,
+) -> None:
+    kalman = KalmanFilter()
+
+    (
+        state,
+        covariance,
+        observation_variance,
+        transition_covariance,
+    ) = kalman.initialize(
+        prices,
+        alpha=1e-5,
+    )
+
+    missing_index = prices.index[50]
+    resumed_index = prices.index[51]
+
+    prices_with_nan = prices.copy()
+    prices_with_nan.loc[missing_index, "X1"] = np.nan
+
+    (
+        spread,
+        _,
+        _,
+        _,
+        _,
+    ) = kalman.filter(
+        prices_with_nan,
+        state=state,
+        covariance=covariance,
+        observation_variance=observation_variance,
+        transition_covariance=transition_covariance,
+    )
+
+    assert pd.isna(spread.loc[missing_index])
+    assert np.isfinite(spread.loc[resumed_index])
+
+
 def test_initialize_rejects_invalid_alpha(
     prices: pd.DataFrame,
 ) -> None:

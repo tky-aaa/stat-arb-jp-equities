@@ -22,26 +22,41 @@ class DataAPI:
 
     def service(self) -> Prices:
         tickers = Universe(self.universe).get_tickers()
-
         instruments = [JapanEquity(ticker) for ticker in tickers]
 
         print("[DataAPI] training: loading prices...", flush=True)
+
         training = self.loader.get_prices(
             instruments=instruments,
             start=self.training_start,
             end=self.training_end,
         )
+
+        valid_tickers = training.columns[training.notna().any(axis=0)].tolist()
+
+        training = training[valid_tickers]
+
         print(
             f"[DataAPI] training: done {training.shape}",
             flush=True,
         )
 
+        valid_instruments = [
+            instrument
+            for instrument in instruments
+            if instrument.ticker in valid_tickers
+        ]
+
         print("[DataAPI] test: loading prices...", flush=True)
+
         test = self.loader.get_prices(
-            instruments=instruments,
+            instruments=valid_instruments,
             start=self.test_start,
             end=self.test_end,
         )
+
+        test = test[valid_tickers]
+
         print(
             f"[DataAPI] test: done {test.shape}",
             flush=True,
